@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Shield, Lock, Activity, Users, CheckCircle2, Code2, Link2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Shield, Lock, Activity, Users, CheckCircle2, Code2, Link2, ShieldCheck, Sun, Moon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
@@ -39,6 +39,8 @@ function ThemedVideo({ lightSrc, darkSrc }: { lightSrc: string; darkSrc: string 
 }
 
 export default function Home() {
+  const { resolvedTheme, setTheme } = useTheme();
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-brand/30">
       {/* Header */}
@@ -58,16 +60,24 @@ export default function Home() {
               </span>
             </Link>
             <nav className="hidden md:flex gap-6 text-sm font-medium text-muted-foreground">
-              <Link href="#" className="hover:text-foreground transition-colors">Home</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Product</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Docs</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Pricing</Link>
-              <Link href="https://github.com/manishpatel00/Onecli-AgentVault" className="hover:text-foreground transition-colors">GitHub</Link>
+              <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+              <Link href="#product" className="hover:text-foreground transition-colors">Product</Link>
+              <Link href="https://github.com/manishpatel00/Onecli-AgentVault#readme" target="_blank" className="hover:text-foreground transition-colors">Docs</Link>
+              <Link href="#pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+              <Link href="https://github.com/manishpatel00/Onecli-AgentVault" target="_blank" className="hover:text-foreground transition-colors">GitHub</Link>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              aria-label="Toggle theme"
+            >
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </button>
             <Link
-              href="/overview"
+              href="/auth/login"
               className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               Get Started
@@ -141,7 +151,7 @@ export default function Home() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/overview"
+                href="/auth/login"
                 className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-md bg-brand px-8 text-base font-medium text-primary-foreground shadow transition-colors hover:bg-brand/90"
               >
                 Get Started
@@ -152,7 +162,7 @@ export default function Home() {
         </section>
 
         {/* Ecosystem Video Section */}
-        <section className="py-24 bg-muted/10 border-t">
+        <section id="product" className="py-24 bg-muted/10 border-t">
           <div className="container mx-auto max-w-6xl px-4 text-center">
             <h2 className="text-4xl font-bold tracking-tight mb-4">
               Every agent. <span className="text-brand">One gateway.</span>
@@ -307,25 +317,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Andrej Karpathy Quote */}
-        <section className="py-24">
-          <div className="container mx-auto max-w-4xl px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-8 leading-tight">
-              &ldquo;CLIs are super exciting precisely because they are a &apos;legacy&apos; technology, which means AI agents can natively and easily use them.&rdquo;
-            </h2>
-            <div className="flex items-center justify-center gap-4">
-              <div className="h-12 w-12 rounded-full overflow-hidden border shadow-sm bg-muted flex items-center justify-center font-bold text-foreground">AK</div>
-              <div className="text-left">
-                <div className="font-semibold flex items-center gap-1">
-                  Andrej Karpathy 
-                  <CheckCircle2 className="h-4 w-4 text-brand" />
-                </div>
-                <div className="text-sm text-muted-foreground">AI researcher · 1.9M views on X</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Social Proof / Problem */}
         <section className="py-24 bg-muted/10 border-y">
           <div className="container mx-auto max-w-6xl px-4 text-center">
@@ -372,7 +363,7 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-24 relative overflow-hidden">
+        <section id="pricing" className="py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-brand/5" />
           <div className="container relative mx-auto max-w-4xl px-4 text-center">
             <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">Start securing your agents today</h2>
@@ -381,13 +372,14 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/overview"
+                href="/auth/login"
                 className="inline-flex h-14 w-full sm:w-auto items-center justify-center rounded-md bg-brand px-10 text-lg font-medium text-primary-foreground shadow transition-colors hover:bg-brand/90"
               >
                 Get Started
               </Link>
               <Link
-                href="#"
+                href="https://github.com/manishpatel00/Onecli-AgentVault#readme"
+                target="_blank"
                 className="inline-flex h-14 w-full sm:w-auto items-center justify-center rounded-md border border-input bg-background px-10 text-lg font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 Read the Docs
@@ -414,10 +406,10 @@ export default function Home() {
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">Home</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Product</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Pricing</Link></li>
-                <li><Link href="/overview" className="hover:text-foreground">Get Started</Link></li>
+                <li><Link href="/" className="hover:text-foreground">Home</Link></li>
+                <li><Link href="#product" className="hover:text-foreground">Product</Link></li>
+                <li><Link href="#pricing" className="hover:text-foreground">Pricing</Link></li>
+                <li><Link href="/auth/login" className="hover:text-foreground">Get Started</Link></li>
               </ul>
             </div>
             <div>

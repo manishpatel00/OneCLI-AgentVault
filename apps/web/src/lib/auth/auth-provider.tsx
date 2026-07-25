@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useMemo, useState, useEffect, type ReactNode } from "react";
 import {
   SessionProvider,
   useSession,
@@ -18,19 +18,32 @@ const LOCAL_USER: AuthUser = {
 };
 
 const LocalAuthProvider = ({ children }: { children: ReactNode }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const authed = localStorage.getItem("local_auth_authenticated") === "true";
+    setIsAuthenticated(authed);
+    setIsLoading(false);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
-      isAuthenticated: true,
-      isLoading: false,
-      user: LOCAL_USER,
+      isAuthenticated,
+      isLoading,
+      user: isAuthenticated ? LOCAL_USER : null,
       signIn: async () => {
+        localStorage.setItem("local_auth_authenticated", "true");
+        setIsAuthenticated(true);
         window.location.href = "/overview";
       },
       signOut: async () => {
+        localStorage.removeItem("local_auth_authenticated");
+        setIsAuthenticated(false);
         window.location.href = "/";
       },
     }),
-    [],
+    [isAuthenticated, isLoading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
