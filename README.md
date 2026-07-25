@@ -18,7 +18,7 @@
 
 # 🚀 DevsUnite Forge Hackathon Submission (July 26, 2026)
 
-This repository is a solo submission by **Manish Kumar** for the **DevsUnite Forge Hiring Hackathon**.
+This repository is a solo submission by **Manish Kumar** for the **DevsUnite Forge Hiring Hackathon (July 2026)**.
 
 ### 🎯 Track 03: Developer Tools & AI Productivity
 *AgentVault is the ultimate trust and security layer for AI coding agents (like Cursor, Claude Code) and autonomous workflows (n8n).*
