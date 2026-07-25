@@ -22,31 +22,19 @@ export const DashboardSidebar = ({
       <SidebarHeader className="h-12 justify-center group-data-[collapsible=icon]:px-0">
         <Link
           href="/"
-          className="flex items-center px-2"
+          className="flex items-center gap-2 px-2"
         >
           <Image
-            src="/agentvault-full-logo.png"
+            src="/agentvault-logo.png"
             alt="AgentVault"
-            width={80}
-            height={23}
+            width={24}
+            height={24}
             priority
-            className="group-data-[collapsible=icon]:hidden dark:hidden"
+            className="shrink-0"
           />
-          <Image
-            src="/agentvault-full-logo-dark.png"
-            alt="AgentVault"
-            width={80}
-            height={23}
-            priority
-            className="hidden dark:group-data-[collapsible=icon]:!hidden dark:block"
-          />
-          <Image
-            src="/logo-icon.svg"
-            alt="AgentVault"
-            width={20}
-            height={20}
-            className="hidden group-data-[collapsible=icon]:block"
-          />
+          <span className="font-bold text-sm tracking-tight group-data-[collapsible=icon]:hidden whitespace-nowrap">
+            Onecli-AgentVault
+          </span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

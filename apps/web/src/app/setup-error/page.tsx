@@ -56,23 +56,17 @@ export default async function SetupErrorPage({
 
   return (
     <div className="bg-background flex min-h-svh flex-col items-center justify-center px-6 pb-24">
-      <div className="mb-8">
+      <div className="mb-8 flex items-center gap-2">
         <Image
-          src="/agentvault-full-logo.png"
+          src="/agentvault-logo.png"
           alt="agentvault"
-          width={140}
-          height={40}
+          width={32}
+          height={32}
           priority
-          className="dark:hidden"
         />
-        <Image
-          src="/agentvault-full-logo-dark.png"
-          alt="agentvault"
-          width={140}
-          height={40}
-          priority
-          className="hidden dark:block"
-        />
+        <span className="font-bold text-xl tracking-tight">
+          Onecli-AgentVault
+        </span>
       </div>
 
       <div className="w-full max-w-md rounded-2xl border border-destructive/50 bg-card p-8">

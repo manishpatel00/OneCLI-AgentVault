@@ -4,20 +4,17 @@ import Image from "next/image";
 export default function NotFound() {
   return (
     <div className="flex h-svh flex-col items-center justify-center gap-4">
-      <Image
-        src="/agentvault-full-logo.png"
-        alt="AgentVault"
-        width={120}
-        height={34}
-        className="dark:hidden"
-      />
-      <Image
-        src="/agentvault-full-logo-dark.png"
-        alt="AgentVault"
-        width={120}
-        height={34}
-        className="hidden dark:block"
-      />
+      <div className="flex items-center gap-2">
+        <Image
+          src="/agentvault-logo.png"
+          alt="AgentVault"
+          width={32}
+          height={32}
+        />
+        <span className="font-bold text-xl tracking-tight">
+          Onecli-AgentVault
+        </span>
+      </div>
       <h1 className="text-2xl font-semibold">Page not found</h1>
       <p className="text-muted-foreground text-sm">
         The page you&apos;re looking for doesn&apos;t exist.

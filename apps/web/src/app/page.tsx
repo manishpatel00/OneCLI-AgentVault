@@ -47,19 +47,15 @@ export default function Home() {
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               <Image 
-                src="/agentvault-full-logo.png" 
+                src="/agentvault-logo.png" 
                 alt="AgentVault" 
-                width={120} 
-                height={32} 
-                className="dark:hidden"
+                width={28} 
+                height={28} 
+                priority
               />
-              <Image 
-                src="/agentvault-full-logo-dark.png" 
-                alt="AgentVault" 
-                width={120} 
-                height={32} 
-                className="hidden dark:block"
-              />
+              <span className="font-bold text-lg tracking-tight">
+                Onecli-AgentVault
+              </span>
             </Link>
             <nav className="hidden md:flex gap-6 text-sm font-medium text-muted-foreground">
               <Link href="#" className="hover:text-foreground transition-colors">Home</Link>
