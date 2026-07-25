@@ -62,7 +62,7 @@ export default function Home() {
               <Link href="#" className="hover:text-foreground transition-colors">Product</Link>
               <Link href="#" className="hover:text-foreground transition-colors">Docs</Link>
               <Link href="#" className="hover:text-foreground transition-colors">Pricing</Link>
-              <Link href="https://github.com/manishpatel00/AgentVault-cli" className="hover:text-foreground transition-colors">GitHub</Link>
+              <Link href="https://github.com/manishpatel00/Onecli-AgentVault" className="hover:text-foreground transition-colors">GitHub</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">

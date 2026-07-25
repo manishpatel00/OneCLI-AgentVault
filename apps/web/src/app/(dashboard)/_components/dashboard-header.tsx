@@ -135,7 +135,7 @@ export const DashboardHeader = () => {
               asChild
             >
               <a
-                href="https://github.com/manishpatel00/AgentVault-cli"
+                href="https://github.com/manishpatel00/Onecli-AgentVault"
                 target="_blank"
                 rel="noopener noreferrer"
               >

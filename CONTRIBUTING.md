@@ -13,8 +13,8 @@ To ensure a positive and inclusive environment, please read our [Code of Conduct
 ### Local Development Setup
 
 ```bash
-git clone https://github.com/manishpatel00/AgentVault-cli.git
-cd AgentVault-cli
+git clone https://github.com/manishpatel00/Onecli-AgentVault.git
+cd Onecli-AgentVault
 pnpm install
 cp .env.example .env
 pnpm db:generate
@@ -27,7 +27,7 @@ See the [README](README.md) for more details on prerequisites and configuration.
 
 If you find a bug, please create an issue and we'll triage it.
 
-- Please search [existing issues](https://github.com/manishpatel00/AgentVault-cli/issues) before creating a new one.
+- Please search [existing issues](https://github.com/manishpatel00/Onecli-AgentVault/issues) before creating a new one.
 - Please include a clear description of the problem along with steps to reproduce it. Screenshots and URLs really help.
 
 ## Pull Requests
@@ -35,8 +35,8 @@ If you find a bug, please create an issue and we'll triage it.
 We actively welcome your Pull Requests! A couple of things to keep in mind before you submit:
 
 - If you're fixing an issue, make sure someone else hasn't already created a PR fixing the same issue. Link your PR to the related issue(s).
-- If you're new, we encourage you to take a look at issues tagged with [good first issue](https://github.com/manishpatel00/AgentVault-cli/labels/good%20first%20issue).
-- If you're submitting a new feature, please open an [issue](https://github.com/manishpatel00/AgentVault-cli/issues/new) first to discuss it before opening a PR.
+- If you're new, we encourage you to take a look at issues tagged with [good first issue](https://github.com/manishpatel00/Onecli-AgentVault/labels/good%20first%20issue).
+- If you're submitting a new feature, please open an [issue](https://github.com/manishpatel00/Onecli-AgentVault/issues/new) first to discuss it before opening a PR.
 
 Before submitting your PR, please run these checks locally:
 

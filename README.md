@@ -65,8 +65,8 @@ curl -fsSL https://agentvault.sh/install | sh
 Or, if you prefer to run it manually:
 
 ```bash
-git clone https://github.com/manishpatel00/AgentVault-cli.git
-cd AgentVault-cli
+git clone https://github.com/manishpatel00/Onecli-AgentVault.git
+cd Onecli-AgentVault
 docker compose -f docker/docker-compose.yml up -d --wait
 ```
 

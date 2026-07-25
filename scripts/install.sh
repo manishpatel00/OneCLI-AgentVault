@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # AgentVault - Open-Source Credential Vault for AI Agents
-# Source: https://github.com/manishpatel00/AgentVault-cli
+# Source: https://github.com/manishpatel00/Onecli-AgentVault
 # License: See repository for license details
 #
 # Usage: curl -fsSL https://agentvault.sh/install | sh
@@ -26,11 +26,11 @@
 # This script checks for Docker, downloads the docker-compose.yml,
 # and starts AgentVault (app + PostgreSQL) on ports 10254 and 10255 by default.
 #
-# Source of Compose: https://github.com/manishpatel00/AgentVault-cli/blob/main/docker/docker-compose.yml
+# Source of Compose: https://github.com/manishpatel00/Onecli-AgentVault/blob/main/docker/docker-compose.yml
 
 INSTALL_DIR="$HOME/.agentvault"
 COMPOSE_FILE="$INSTALL_DIR/docker-compose.yml"
-COMPOSE_URL="https://raw.githubusercontent.com/manishpatel00/AgentVault-cli/main/docker/docker-compose.yml"
+COMPOSE_URL="https://raw.githubusercontent.com/manishpatel00/Onecli-AgentVault/main/docker/docker-compose.yml"
 PROJECT_NAME="agentvault"
 
 # Detect the correct bind host for Docker port bindings.

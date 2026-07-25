@@ -26,7 +26,7 @@ const ISSUE_BODY_TEMPLATE = `**Website:**
 **How you'd use this with AgentVault:**
 `;
 
-const GITHUB_ISSUE_URL = `https://github.com/manishpatel00/AgentVault-cli/issues/new?${new URLSearchParams(
+const GITHUB_ISSUE_URL = `https://github.com/manishpatel00/Onecli-AgentVault/issues/new?${new URLSearchParams(
   {
     labels: "app request",
     title: "App request: ",
