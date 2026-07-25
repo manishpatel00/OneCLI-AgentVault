@@ -16,6 +16,18 @@
 
 ---
 
+# 🚀 DevsUnite Forge Hackathon Submission (July 26, 2026)
+
+This repository is a solo submission by **Manish Kumar** for the **DevsUnite Forge Hiring Hackathon**.
+
+### 🎯 Track 03: Developer Tools & AI Productivity
+*AgentVault is the ultimate trust and security layer for AI coding agents (like Cursor, Claude Code) and autonomous workflows (n8n).*
+
+- **Why it matters:** AI agents write and execute code natively in local terminals, but giving them raw credentials is a major liability. Prompt injection can trigger malicious actions, or a loop bug can wipe out databases/emails. AgentVault intercepts all traffic at the network layer to prevent credential leaks, restrict malicious endpoints (like blocking `DELETE` requests), and enforce strict rate limits.
+- **Under the Hood:** Next.js 16 Web Dashboard, high-performance MITM Rust Proxy, Prisma ORM, and PostgreSQL.
+
+---
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/agentvault-flow-dark.gif">
   <source media="(prefers-color-scheme: light)" srcset="assets/agentvault-flow-light.gif">
