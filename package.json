@@ -22,7 +22,8 @@
     "db:migrate": "dotenv -e .env -- pnpm --filter @agentvault/db db:migrate",
     "db:studio": "dotenv -e .env -- pnpm --filter @agentvault/db prisma studio",
     "test": "turbo run test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "pnpm db:generate"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",
