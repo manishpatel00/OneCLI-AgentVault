@@ -1,68 +1,81 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/agentvault-logo-dark.gif">
-  <source media="(prefers-color-scheme: light)" srcset="assets/agentvault-logo-light.gif">
-  <img alt="AgentVault" src="assets/agentvault-logo-light.gif" width="100%">
-</picture>
+<div align="center">
 
-<p align="center">
-  <b>The secret vault for AI agents.</b><br/>
-  Store once. Inject anywhere. Agents never see the keys.
-</p>
+<img width="1920" height="558" alt="image" src="https://github.com/user-attachments/assets/d9c930ff-ab10-440c-aa21-77c917afb354" />
 
-<p align="center">
-  <a href="https://agentvault.sh">Website</a> &middot;
-  <a href="https://agentvault.sh/docs">Docs</a>
-</p>
 
----
+<img src="assets/agentvault-logo-light.gif" alt="OneCLI-AgentVault Logo" width="100%" />
 
-# 🚀 DevsUnite Forge Hackathon Submission (July 26, 2026)
+**The privacy-first credential gateway and isolation proxy for AI agents.**
+Store once. Inject at the network layer. Intercept securely. AI agents never see your actual API keys.
 
-This repository is a solo submission by **Manish Kumar** for the **DevsUnite Forge Hiring Hackathon (July 2026)**.
+[![Rust](https://img.shields.io/badge/Rust-1.80%2B-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.1.0-black?style=flat-square&logo=nextdotjs)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-6.x-blue?style=flat-square&logo=prisma)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue?style=flat-square&logo=docker)](https://www.docker.com/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com)
 
-### 🎯 Track 03: Developer Tools & AI Productivity
-*AgentVault is the ultimate trust and security layer for AI coding agents (like Cursor, Claude Code) and autonomous workflows (n8n).*
+[**Website**](https://agent-vault-cli-web.vercel.app/)
 
-- **Why it matters:** AI agents write and execute code natively in local terminals, but giving them raw credentials is a major liability. Prompt injection can trigger malicious actions, or a loop bug can wipe out databases/emails. AgentVault intercepts all traffic at the network layer to prevent credential leaks, restrict malicious endpoints (like blocking `DELETE` requests), and enforce strict rate limits.
-- **Under the Hood:** Next.js 16 Web Dashboard, high-performance MITM Rust Proxy, Prisma ORM, and PostgreSQL.
+</div>
+
+
+
 
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/agentvault-flow-dark.gif">
-  <source media="(prefers-color-scheme: light)" srcset="assets/agentvault-flow-light.gif">
-  <img alt="How AgentVault works" src="assets/agentvault-flow-light.gif" width="100%">
-</picture>
+> *OneCLI-AgentVault is the ultimate trust and security layer for AI coding agents (like Cursor, Claude Code) and autonomous workflows (n8n, Dify).*
 
-## What is AgentVault?
+- **Why it matters:** AI agents write and execute code natively in local terminals, but giving them raw credentials is a major liability. Prompt injection can trigger malicious actions, or a loop bug can wipe out databases/emails. OneCLI-AgentVault intercepts all traffic at the network layer to prevent credential leaks, restrict malicious endpoints (like blocking `DELETE` requests), and enforce strict rate limits.
 
-AgentVault is an open-source gateway that sits between your AI agents and the services they call. Instead of baking API keys into every agent, you store credentials once in AgentVault and the gateway injects them transparently. Agents never see the secrets.
+---
 
-**Why we built it:** AI agents need to call dozens of APIs, but giving each agent raw credentials is a security risk. AgentVault solves this with a single gateway that handles auth, so you get one place to manage access, rotate keys, and see what every agent is doing.
+## What is OneCLI-AgentVault?
 
-**How it works:** You store your real API credentials in AgentVault and give your agents placeholder keys (e.g. `FAKE_KEY`). When an agent makes an HTTP call through the gateway, the AgentVault gateway matches the request to the right credentials, swaps the `FAKE_KEY` for the `REAL_KEY`, decrypts them, and injects them into the outbound request. The agent never touches the real secrets. It just makes normal HTTP calls and the gateway handles the swap.
+OneCLI-AgentVault is an open-source gateway that sits between your AI agents and the services they call. Instead of baking API keys into every agent, you store credentials once in OneCLI-AgentVault, and the gateway injects them transparently. Agents never see the secrets.
+
+**Why we built it:** AI agents need to call dozens of APIs, but giving each agent raw credentials is a security risk. OneCLI-AgentVault solves this with a single gateway that handles auth, so you get one place to manage access, rotate keys, and see what every agent is doing.
+
+**How it works:** You store your real API credentials in OneCLI-AgentVault and give your agents placeholder keys (e.g. `FAKE_KEY`). When an agent makes an HTTP call through the gateway, OneCLI-AgentVault matches the request to the right credentials, decrypts them, and injects them in place of the `FAKE_KEY` into the outbound request. The agent never touches the real secrets — it just makes normal HTTP calls, and the gateway handles the swap.
+
+---
 
 ## Architecture
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/agentvault-architecture-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/agentvault-architecture-light.svg">
-  <img alt="AgentVault Architecture" src="assets/agentvault-architecture-dark.svg" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/onecli-architecture-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/onecli-architecture-light.svg">
+  <img alt="OneCLI Architecture" src="assets/onecli-architecture-dark.svg" width="100%">
 </picture>
 
-- **[Rust Gateway](apps/gateway)**: fast HTTP gateway that intercepts outbound requests and injects credentials. Agents authenticate with access tokens via `Proxy-Authorization` headers.
-- **[Web Dashboard](apps/web)**: Next.js app for managing agents, secrets, and permissions. Provides the API the gateway uses to resolve which credentials to inject for each request.
-- **Secret Store**: AES-256-GCM encrypted credential storage. Secrets are decrypted only at request time, matched by host and path patterns, and injected by the gateway as headers or URL query parameters.
+| Component | Role |
+|---|---|
+| **[Rust Gateway](apps/gateway)** | Fast HTTP gateway that intercepts outbound requests and injects credentials. Agents authenticate with access tokens via `Proxy-Authorization` headers. |
+| **[Web Dashboard](apps/web)** | Next.js app for managing agents, secrets, and permissions. Provides the API the gateway uses to resolve which credentials to inject for each request. |
+| **Secret Store** | AES-256-GCM encrypted credential storage. Secrets are decrypted only at request time, matched by host and path patterns, and injected by the gateway as headers or URL query parameters. |
+
+---
+
+##  Tech Stack
+
+OneCLI-AgentVault is built using a modern, performant, and type-safe stack:
+
+| Core Technology | Description |
+|---|---|
+| ![Rust](https://img.shields.io/badge/Rust-1.80%2B-orange?style=flat-square&logo=rust) | High-performance MITM interception proxy engine |
+| ![Next.js](https://img.shields.io/badge/Next.js-16.1.0-black?style=flat-square&logo=nextdotjs) | Dashboard UI & configuration API management |
+| ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript) | Type-safe client and API route coordination |
+| ![Prisma](https://img.shields.io/badge/Prisma-6.x-blue?style=flat-square&logo=prisma) | Modern database toolkit and object-relational mapping |
+| ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql) | Secure persistent storage for agent configuration |
+| ![Docker](https://img.shields.io/badge/Docker-Compose-blue?style=flat-square&logo=docker) | Containerized local environment and deployment runtime |
+| ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?style=flat-square&logo=tailwindcss) | High-end visual aesthetics and dark mode implementation |
+
+---
 
 ## Quick Start
 
-The fastest way to run AgentVault locally:
-
-```bash
-curl -fsSL https://agentvault.sh/install | sh
-```
-
-Or, if you prefer to run it manually:
+If you prefer to run it manually:
 
 ```bash
 git clone https://github.com/manishpatel00/Onecli-AgentVault.git
@@ -72,7 +85,7 @@ docker compose -f docker/docker-compose.yml up -d --wait
 
 Open **http://localhost:10254**, create an agent, add your secrets, and point your agent's HTTP gateway to `localhost:10255`.
 
-> The Quick Start runs AgentVault in **local mode** (single-user, no login), so no `.env` or `NEXTAUTH_SECRET` is required. To enable Google OAuth for multiple users, set `NEXTAUTH_SECRET` and the Google credentials (see [Configuration](#configuration)).
+> The Quick Start runs OneCLI in **local mode** (single-user, no login), so no `.env` or `NEXTAUTH_SECRET` is required. To enable Google OAuth for multiple users, set `NEXTAUTH_SECRET` and the Google credentials (see [Configuration](#configuration)).
 
 ## Features
 
@@ -80,7 +93,7 @@ Open **http://localhost:10254**, create an agent, add your secrets, and point yo
 - **Encrypted secret storage**: AES-256-GCM encryption at rest, decrypted only at request time
 - **Host & path matching**: route secrets to the right API endpoints with pattern matching
 - **Multi-agent support**: each agent gets its own access token with scoped permissions
-- **Easy setup**: `curl -fsSL https://agentvault.sh/install | sh` starts everything (app + PostgreSQL)
+- **Easy setup**: `curl -fsSL https://onecli.sh/install | sh` starts everything (app + PostgreSQL)
 - **Two auth modes**: single-user (no login) for local use, or Google OAuth for teams
 - **Rust gateway**: fast, memory-safe HTTP gateway with MITM interception for HTTPS
 - **[Vault integration](docs/vault-integration.md)**: connect Bitwarden (or other password managers) for on-demand credential injection without storing secrets on the server
@@ -124,7 +137,7 @@ Dashboard at **http://localhost:10254**, gateway at **http://localhost:10255**.
 ### Commands
 
 | Command            | Description                     |
-| ------------------ | ------------------------------- |
+| ------------------ | -------------------------------- |
 | `pnpm dev`         | Start web + gateway in dev mode |
 | `pnpm build`       | Production build                |
 | `pnpm check`       | Lint + types + format           |
@@ -139,12 +152,12 @@ Dashboard at **http://localhost:10254**, gateway at **http://localhost:10255**.
 All environment variables are optional for local development:
 
 | Variable                | Description                       | Default            |
-| ----------------------- | --------------------------------- | ------------------ |
+| ------------------------ | ---------------------------------- | ------------------- |
 | `DATABASE_URL`          | PostgreSQL connection string      | See `.env.example` |
 | `NEXTAUTH_SECRET`       | Enables Google OAuth (multi-user) | Single-user mode   |
 | `GOOGLE_CLIENT_ID`      | Google OAuth client ID            | —                  |
 | `GOOGLE_CLIENT_SECRET`  | Google OAuth client secret        | —                  |
-| `SECRET_ENCRYPTION_KEY` | AES-256-GCM encryption key        | Auto-generated     |
+| `SECRET_ENCRYPTION_KEY` | AES-256-GCM encryption key        | Auto-generated      |
 
 ## Contributing
 
@@ -152,4 +165,10 @@ We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) 
 
 ## License
 
-[Apache-2.0](LICENSE)
+Licensed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+Built with ❤️ for the AI agent ecosystem.
