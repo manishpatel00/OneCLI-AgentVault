@@ -301,7 +301,7 @@ mod tests {
         let mut headers = hyper::HeaderMap::new();
         headers.insert(
             AWS_ACCESS_KEY_HEADER,
-            HeaderValue::from_static("AKIAIOSFODNN7EXAMPLE"),
+            HeaderValue::from_static("AKIA_MOCK_KEY_ID_EXAMPLE"),
         );
         headers.insert(
             AWS_SECRET_KEY_HEADER,
@@ -311,7 +311,7 @@ mod tests {
         headers.insert("content-type", HeaderValue::from_static("application/json"));
 
         let creds = extract_credentials(&mut headers).expect("should extract");
-        assert_eq!(creds.access_key_id, "AKIAIOSFODNN7EXAMPLE");
+        assert_eq!(creds.access_key_id, "AKIA_MOCK_KEY_ID_EXAMPLE");
         assert_eq!(creds.secret_access_key, "wJalrXUtnFEMI");
         assert_eq!(creds.session_token, None);
         assert_eq!(creds.region, "us-east-1");
@@ -335,7 +335,7 @@ mod tests {
         let mut headers = hyper::HeaderMap::new();
         headers.insert(
             AWS_ACCESS_KEY_HEADER,
-            HeaderValue::from_static("AKIAIOSFODNN7EXAMPLE"),
+            HeaderValue::from_static("AKIA_MOCK_KEY_ID_EXAMPLE"),
         );
         // Missing secret and region — should return None without removing access key
         assert!(extract_credentials(&mut headers).is_none());
@@ -350,7 +350,7 @@ mod tests {
         let mut headers = hyper::HeaderMap::new();
         headers.insert(
             AWS_ACCESS_KEY_HEADER,
-            HeaderValue::from_static("ASIAIOSFODNN7EXAMPLE"),
+            HeaderValue::from_static("ASIA_MOCK_KEY_ID_EXAMPLE"),
         );
         headers.insert(
             AWS_SECRET_KEY_HEADER,
@@ -363,7 +363,7 @@ mod tests {
         headers.insert(AWS_REGION_HEADER, HeaderValue::from_static("us-west-2"));
 
         let creds = extract_credentials(&mut headers).expect("should extract");
-        assert_eq!(creds.access_key_id, "ASIAIOSFODNN7EXAMPLE");
+        assert_eq!(creds.access_key_id, "ASIA_MOCK_KEY_ID_EXAMPLE");
         assert_eq!(creds.secret_access_key, "wJalrXUtnFEMI");
         assert_eq!(creds.session_token.as_deref(), Some("FwoGZXIvYXdzEBY"));
         assert_eq!(creds.region, "us-west-2");
