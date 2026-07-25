@@ -1,0 +1,1947 @@
+//! Policy resolution and caching for CONNECT decisions.
+//!
+//! Resolves what to do when the gateway receives a CONNECT request by querying
+//! the database directly via SQLx. Responses are cached per (agent_token, host)
+//! with a configurable TTL.
+
+use std::borrow::Cow;
+use std::sync::Arc;
+
+use tracing::{debug, warn};
+
+use crate::apps;
+use crate::cache::CacheStore;
+use crate::crypto::CryptoService;
+use crate::db;
+use crate::inject::{Injection, InjectionRule};
+use crate::secret_inject;
+use crate::vault::onepassword::OnePasswordVaultProvider;
+
+/// How long to cache resolved connect responses before re-checking.
+const CACHE_TTL_SECS: u64 = 60;
+
+/// Header name for per-request app connection disambiguation (request).
+pub(crate) const CONNECTION_ID_HEADER: &str = "x-agentvault-connection-id";
+/// Header name for listing available connections (response).
+pub(crate) const CONNECTIONS_HEADER: &str = "x-agentvault-connections";
+/// Agent secret mode that restricts access to explicitly assigned credentials.
+pub(crate) const SECRET_MODE_SELECTIVE: &str = "selective";
+
+/// Which credential pool a connecting agent draws from. `secret_mode` is the
+/// all-vs-rules SWITCH; the v2 selection only says WHICH credentials a already
+/// -selective agent gets.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum InjectionPool {
+    /// All mode: the whole org+project(+partner) fenced pool. Policy rules gate
+    /// the REQUEST here — they never NARROW the pool, or an all-mode agent would
+    /// lose its partner / budget-metered / other host-matched credentials.
+    All,
+    /// Selective with a rule-driven selection: the fenced pool narrowed to what
+    /// the agent's v2 allow rules name.
+    RuleSelected,
+    /// Selective with no selection: nothing is injected. Since step 10 the old
+    /// per-agent grant tables are unread, so this must NEVER fall through to
+    /// `All` — that would hand a deliberately restricted agent every credential.
+    Empty,
+}
+
+/// The pool for the SECRET side: rule-selected when the agent is selective and
+/// its rules name secret ids and/or whole levels.
+pub(crate) fn secret_pool(secret_mode: &str, selection: &db::InjectSelection) -> InjectionPool {
+    if secret_mode != SECRET_MODE_SELECTIVE {
+        return InjectionPool::All;
+    }
+    if selection.secret_ids.is_empty() && selection.secret_scopes.is_empty() {
+        return InjectionPool::Empty;
+    }
+    InjectionPool::RuleSelected
+}
+
+/// The pool for the APP-CONNECTION side: the symmetric rule, over named
+/// connection ids and/or (provider, level) scopes.
+pub(crate) fn connection_pool(secret_mode: &str, selection: &db::InjectSelection) -> InjectionPool {
+    if secret_mode != SECRET_MODE_SELECTIVE {
+        return InjectionPool::All;
+    }
+    if selection.connections.is_empty() && selection.app_scopes.is_empty() {
+        return InjectionPool::Empty;
+    }
+    InjectionPool::RuleSelected
+}
+
+// ── Data types ──────────────────────────────────────────────────────────
+
+/// Result of policy resolution for a CONNECT request.
+#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+pub(crate) struct ConnectResponse {
+    pub intercept: bool,
+    pub injection_rules: Vec<InjectionRule>,
+    #[serde(default)]
+    pub app_connections: Vec<db::AppConnectionRow>,
+    pub project_id: Option<String>,
+    pub organization_id: Option<String>,
+    pub agent_id: Option<String>,
+    pub agent_name: Option<String>,
+    pub agent_identifier: Option<String>,
+    /// True when the project has credentials (secrets or app connections) for
+    /// this host but the agent can't access them (selective mode). Used to show
+    /// a more helpful error ("grant access") instead of "connect the app".
+    #[serde(default)]
+    pub access_restricted: bool,
+    /// Normalized plan name for quota enforcement ("free", "pro", "team",
+    /// "enterprise").
+    #[serde(default)]
+    pub plan: String,
+    /// Cloud-only: pending claim token when this org is a partner-created org
+    /// awaiting claim (claim mode). None otherwise. Inert in OSS.
+    #[serde(default)]
+    pub claim_token: Option<String>,
+    /// Cloud-only: spend budgets governing the effective credential for this
+    /// host (0/1 in practice — the response is per-host).
+    #[serde(default)]
+    pub budget_bindings: Vec<crate::budget::BudgetBinding>,
+    /// Cloud-only: the published new-model policy rules for this connection (org
+    /// and project scopes), loaded here (cached ~60s with the rest of this
+    /// response) so the per-request decision path is DB-free. Empty when
+    /// the engine is off, or before the org is backfilled.
+    #[serde(default)]
+    pub policy_rules_v2: db::PolicyV2Rules,
+    /// Cloud-only: the apps this connection's project may reach (step 7), resolved
+    /// here (cached ~60s with the rest of this response) so the per-request app
+    /// pre-check is DB-free. Unrestricted (every app available) in OSS, when the
+    /// org's availability mode is "open", or when enforcement is off.
+    #[serde(default)]
+    pub available_apps: db::AvailableApps,
+}
+
+/// Result of per-request app connection resolution.
+pub(crate) enum AppConnectionResult {
+    /// Injection rules resolved from a single connection.
+    Rules {
+        rules: Vec<InjectionRule>,
+        /// Token expiry (UNIX timestamp) from the resolved app connection, if known.
+        token_expires_at: Option<i64>,
+        /// Rewritten upstream host (e.g., Datadog us5 → api.us5.datadoghq.com).
+        rewrite_host: Option<String>,
+        /// Display label of the connection (e.g., email address for OAuth accounts).
+        connection_label: Option<String>,
+        /// Provider-specific request finalizer (e.g., SigV4 vs AssumeRole).
+        finalizer: Option<apps::RequestFinalizer>,
+        /// Provider-specific body transform (e.g., commit trailer injection).
+        body_transform: Option<apps::BodyTransform>,
+        /// Provider name of the resolved connection (e.g., "github-app", "datadog").
+        provider: String,
+        /// Per-agent granular-access policy of THIS connection — the one that
+        /// won injection. Carried here (rather than re-derived by a provider
+        /// scan) so request-level enforcement applies the correct policy even
+        /// when an agent has several same-provider connections.
+        session_policy: Option<serde_json::Value>,
+    },
+    /// No app connections available for this provider.
+    NoConnections,
+    /// Multiple connections exist and no header was provided — agent must pick.
+    Ambiguous { connections: Vec<ConnectionChoice> },
+    /// Multiple providers match the same request path — agent must pick.
+    MultipleProviders { connections: Vec<ConnectionChoice> },
+    /// The requested connection ID was not found — return the valid options.
+    NotFound { connections: Vec<ConnectionChoice> },
+}
+
+/// Cached injection result including host rewrite, so cache hits preserve routing.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct CachedAppInjection {
+    rules: Vec<InjectionRule>,
+    rewrite_host: Option<String>,
+    connection_label: Option<String>,
+}
+
+/// A single app connection option returned in disambiguation responses.
+#[derive(Debug, Clone, serde::Serialize)]
+pub(crate) struct ConnectionChoice {
+    pub id: String,
+    pub label: Option<String>,
+    pub provider: String,
+    pub display_name: Option<&'static str>,
+}
+
+impl ConnectionChoice {
+    pub fn from_row(row: &db::AppConnectionRow) -> Self {
+        Self {
+            id: row.id.clone(),
+            label: row.label.clone(),
+            provider: row.provider.clone(),
+            display_name: apps::display_name_for_provider(&row.provider),
+        }
+    }
+}
+
+/// Extract the connection ID from request headers.
+pub(crate) fn extract_connection_id(headers: &hyper::HeaderMap) -> Option<String> {
+    headers
+        .get(CONNECTION_ID_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+}
+
+/// Inject the `x-agentvault-connections` response header listing available connections.
+pub(crate) fn inject_connections_header<B>(
+    resp: &mut hyper::Response<B>,
+    app_connections: &[db::AppConnectionRow],
+) {
+    if app_connections.is_empty() {
+        return;
+    }
+    let choices: Vec<ConnectionChoice> = app_connections
+        .iter()
+        .map(ConnectionChoice::from_row)
+        .collect();
+    if let Ok(json) = serde_json::to_string(&choices) {
+        match hyper::header::HeaderValue::from_str(&json) {
+            Ok(val) => {
+                resp.headers_mut().insert(CONNECTIONS_HEADER, val);
+            }
+            Err(e) => {
+                tracing::debug!(error = %e, "failed to encode connections header");
+            }
+        }
+    }
+}
+
+/// Errors from the connect resolution.
+#[derive(Debug)]
+pub(crate) enum ConnectError {
+    /// Agent token is invalid (DB lookup found nothing).
+    InvalidToken,
+    /// An internal error occurred (DB query, decryption, etc.).
+    Internal(String),
+}
+
+// ── PolicyEngine ───────────────────────────────────────────────────
+
+/// Resolves CONNECT policy by querying the database directly via SQLx
+/// and decrypting secrets in Rust.
+pub(crate) struct PolicyEngine {
+    pub pool: sqlx::PgPool,
+    pub crypto: Arc<CryptoService>,
+    /// Resolves `op://` references for secrets with `value_source = "onepassword"`.
+    /// The same `Arc` is also registered as a `VaultService` provider (where it
+    /// acts only as a connection holder — it never races on hostname).
+    pub onepassword: Arc<OnePasswordVaultProvider>,
+}
+
+impl PolicyEngine {
+    /// Look up agent by access token.
+    async fn find_agent(&self, agent_token: &str) -> Result<db::AgentRow, ConnectError> {
+        db::find_agent_by_token(&self.pool, agent_token)
+            .await
+            .map_err(db_err)?
+            .ok_or(ConnectError::InvalidToken)
+    }
+
+    /// Resolve what to do for an agent + host combination (without caching).
+    async fn resolve_uncached(
+        &self,
+        agent: &db::AgentRow,
+        hostname: &str,
+    ) -> Result<ConnectResponse, ConnectError> {
+        // Load the published new-model policy for this connection's scopes FIRST
+        // (cached with the rest of ConnectResponse, so the per-request path never
+        // touches the DB). Step 8: the inject-selection derives from these rules
+        // which specific credentials the agent's rules allow — the connect-time
+        // SELECTION that replaces the equipment join for a selective agent.
+        //
+        // A load failure REFUSES the CONNECT (like every other query here), so the
+        // agent retries. Resolving empty instead would be doubly wrong now that
+        // the legacy fallback is gone: every request would decide Allow AND a
+        // selective agent would get no credentials — both cached for ~60s.
+        let policy_rules_v2 = crate::policy_engine::load_connect_v2(
+            &self.pool,
+            &agent.organization_id,
+            &agent.project_id,
+            &agent.id,
+        )
+        .await
+        .map_err(db_err)?;
+        let inject_selection =
+            crate::policy_engine::derive_inject_selection(&policy_rules_v2, &agent.id);
+
+        let (injection_rules, budget_bindings) = self
+            .resolve_secret_injections(agent, hostname, &inject_selection)
+            .await?;
+        let app_connections = self
+            .resolve_app_connections(agent, hostname, &inject_selection)
+            .await?;
+        // Intercept when this host has a credential to inject. Enforcement does
+        // NOT depend on this: `gateway.rs` forces MITM for every authenticated
+        // agent, so a block / rate-limit / approval rule on an uncredentialed host
+        // is intercepted and enforced regardless. Keeping a rule-derived term here
+        // would only suppress the vault fallback (`gateway.rs` runs it when
+        // `!intercept`) for hosts some rule happens to name — including rules
+        // scoped to a different agent.
+        let has_credentials = !injection_rules.is_empty() || !app_connections.is_empty();
+
+        // Check if the project has credentials (secrets or app connections) for this
+        // host that the agent can't access (selective mode).
+        let access_restricted = injection_rules.is_empty()
+            && agent.secret_mode == SECRET_MODE_SELECTIVE
+            && self.has_available_credentials(agent, hostname).await;
+
+        let plan = match agent.subscription_status.as_str() {
+            "pro" => "pro",
+            "team" => "team",
+            "enterprise" => "enterprise",
+            _ => "free",
+        }
+        .to_string();
+
+        // Cloud-only: resolve claim-mode state once here (cached with the rest
+        // of ConnectResponse for 60s). No-op in OSS (returns None).
+        let claim_token =
+            crate::partner::claim_token_for_org(&self.pool, &agent.organization_id).await;
+
+        // Cloud-only: resolve which apps this project may connect (step 7), cached
+        // here so the per-request pre-check is DB-free. "All available" in OSS,
+        // when the org's availability mode is "open", or when enforcement is off.
+        let available_apps = crate::policy_engine::load_available_apps(
+            &self.pool,
+            &agent.organization_id,
+            &agent.project_id,
+        )
+        .await;
+
+        Ok(ConnectResponse {
+            intercept: has_credentials || access_restricted,
+            injection_rules,
+            app_connections,
+            project_id: Some(agent.project_id.clone()),
+            organization_id: Some(agent.organization_id.clone()),
+            agent_id: Some(agent.id.clone()),
+            agent_name: Some(agent.name.clone()),
+            agent_identifier: agent.identifier.clone(),
+            access_restricted,
+            plan,
+            claim_token,
+            budget_bindings,
+            policy_rules_v2,
+            available_apps,
+        })
+    }
+
+    /// Build injection rules from secrets matching this host.
+    /// Returns `(rules, budget_bindings)`.
+    async fn resolve_secret_injections(
+        &self,
+        agent: &db::AgentRow,
+        hostname: &str,
+        selection: &db::InjectSelection,
+    ) -> Result<(Vec<InjectionRule>, Vec<crate::budget::BudgetBinding>), ConnectError> {
+        let secrets = match secret_pool(&agent.secret_mode, selection) {
+            InjectionPool::RuleSelected => {
+                // Step 8 (rule-driven): a SELECTIVE agent's allow rules name specific
+                // secrets (`secret_ids`) and/or "all secrets at a level"
+                // (`secret_scopes`). Gated on `secret_mode` — `secret_mode` stays the
+                // all-vs-selective SWITCH, so an ALL-mode agent always takes the full
+                // merge below and a rule can never NARROW it (dropping its partner /
+                // budget-metered / other host-matched secrets); the v2 selection only
+                // picks WHICH secrets for an already-selective agent.
+                // Fetch the ORG/PROJECT-fenced candidate pool and NARROW to the named
+                // ids OR the named levels (a secret's own `scope` — "organization" /
+                // "project"). The org-fence is on the FETCH, so a rule naming another
+                // org's secret can't pull it (the id simply isn't in the pool). Partner
+                // is excluded (a rule can only name a project/org secret or level, per
+                // `assertTargetsValid`), matching legacy selective mode (also no partner).
+                let (org_result, project_result) = tokio::join!(
+                    db::find_secrets_by_org(&self.pool, &agent.organization_id),
+                    db::find_secrets_by_project(&self.pool, &agent.project_id),
+                );
+                let mut merged = org_result.map_err(db_err)?;
+                merged.extend(project_result.map_err(db_err)?);
+                merged.retain(|s| {
+                    selection.secret_ids.contains(&s.id)
+                        || selection.secret_scopes.contains(&s.scope)
+                });
+                merged
+            }
+            // A SELECTIVE agent with no rule-driven selection has no granted
+            // secrets → inject nothing. WHICH secrets a selective agent gets now
+            // comes solely from its v2 allow rules (incl. the frozen equipment
+            // rules that mirror its old grants) — there is no `agent_secrets`
+            // fallback since step 10.
+            InjectionPool::Empty => Vec::new(),
+            InjectionPool::All => {
+                // All mode precedence (lowest → highest): partner, then org, then
+                // project. Later same-header injections override earlier ones, so
+                // partner is the lowest-priority fallback. All three tiers resolve
+                // concurrently (this only runs on a cache miss);
+                // `inherited_secret_rows` is a no-op in OSS (returns an empty Vec).
+                let (partner_rows, org_result, project_result) = tokio::join!(
+                    crate::partner::inherited_secret_rows(&self.pool, &agent.organization_id),
+                    db::find_secrets_by_org(&self.pool, &agent.organization_id),
+                    db::find_secrets_by_project(&self.pool, &agent.project_id),
+                );
+                let mut merged = partner_rows;
+                merged.extend(org_result.map_err(db_err)?);
+                merged.extend(project_result.map_err(db_err)?);
+                merged
+            }
+        };
+
+        let matching: Vec<_> = secrets
+            .into_iter()
+            .filter(|s| {
+                // Injection covers every host this secret's credential is valid on —
+                // the SAME set enforcement resolves (`db::find_secret_hosts`), so a
+                // policy rule on the secret can never fall short of injection (the
+                // OpenAI multi-host bypass class).
+                secret_inject::secret_host_patterns(&s.type_, &s.host_pattern)
+                    .iter()
+                    .any(|p| host_matches(hostname, p))
+            })
+            .collect();
+
+        let mut rules = Vec::with_capacity(matching.len());
+        for secret in &matching {
+            // Resolve the value from its source (inline column or live 1Password
+            // reference); a failure skips the secret, exactly as a decrypt
+            // failure always has.
+            let Some(value) = self.resolve_secret_value(secret, &agent.project_id).await else {
+                continue;
+            };
+
+            // OAuth token refresh applies only to inline OpenAI secrets; a
+            // 1Password-sourced value is always a raw API key (api-key metadata).
+            let is_openai_oauth = secret.value_source != "onepassword"
+                && secret.type_ == "openai"
+                && secret
+                    .metadata
+                    .as_ref()
+                    .and_then(|m| m.get("authMode"))
+                    .and_then(|v| v.as_str())
+                    == Some("oauth");
+
+            let effective_value = if is_openai_oauth {
+                match secret_inject::refresh_openai_oauth_if_expired(
+                    &self.crypto,
+                    &self.pool,
+                    &value,
+                    &secret.id,
+                )
+                .await
+                {
+                    Some(refreshed) => refreshed,
+                    None => value,
+                }
+            } else {
+                value
+            };
+
+            let injections = secret_inject::build_injections(
+                &secret.type_,
+                &effective_value,
+                secret.injection_config.as_ref(),
+                secret.metadata.as_ref(),
+            );
+
+            rules.push(InjectionRule {
+                path_pattern: secret
+                    .path_pattern
+                    .clone()
+                    .unwrap_or_else(|| "*".to_string()),
+                injections,
+            });
+        }
+
+        // Cloud-only: resolve spend budgets for the effective partner credential
+        // among the host-filtered secrets. The budget module owns which partner
+        // secret is effective (by scope, not shadowed). No-op in OSS.
+        let budget_bindings =
+            crate::budget::resolve_bindings(&self.pool, &agent.organization_id, &matching).await;
+
+        Ok((rules, budget_bindings))
+    }
+
+    /// Produce a secret's plaintext value from its source — the encrypted column
+    /// (inline) or a live 1Password reference. Returns `None` (after logging) when
+    /// the value can't be produced, so the caller skips the secret exactly as it
+    /// always has on a decrypt failure.
+    async fn resolve_secret_value(
+        &self,
+        secret: &db::SecretRow,
+        project_id: &str,
+    ) -> Option<String> {
+        match secret.value_source.as_str() {
+            "onepassword" => {
+                let Some(op_ref) = secret.op_ref.as_deref() else {
+                    warn!(
+                        host_pattern = %secret.host_pattern,
+                        secret_type = %secret.type_,
+                        "skipping 1Password secret: missing op_ref"
+                    );
+                    return None;
+                };
+                match self.onepassword.resolve_ref(project_id, op_ref).await {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        warn!(
+                            host_pattern = %secret.host_pattern,
+                            secret_type = %secret.type_,
+                            error = %e,
+                            "skipping secret: 1Password resolution failed"
+                        );
+                        None
+                    }
+                }
+            }
+            _ => {
+                let Some(encrypted) = secret.encrypted_value.as_deref() else {
+                    warn!(
+                        host_pattern = %secret.host_pattern,
+                        secret_type = %secret.type_,
+                        "skipping secret: inline secret has no stored value"
+                    );
+                    return None;
+                };
+                match self.crypto.decrypt(encrypted).await {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        warn!(
+                            host_pattern = %secret.host_pattern,
+                            secret_type = %secret.type_,
+                            error = ?e,
+                            "skipping secret: decryption failed (wrong key or format mismatch)"
+                        );
+                        None
+                    }
+                }
+            }
+        }
+    }
+
+    /// Fetch app connections matching providers for this host (deferred resolution).
+    ///
+    /// Returns the raw `AppConnectionRow` values filtered to providers that match
+    /// the hostname. Decryption and injection rule building are deferred to
+    /// per-request time via [`resolve_app_injection_for_request`] so that
+    /// multi-connection disambiguation can happen with the `x-agentvault-connection-id` header.
+    async fn resolve_app_connections(
+        &self,
+        agent: &db::AgentRow,
+        hostname: &str,
+        selection: &db::InjectSelection,
+    ) -> Result<Vec<db::AppConnectionRow>, ConnectError> {
+        let providers = apps::providers_for_host(hostname);
+        if providers.is_empty() {
+            debug!(host = %hostname, "app_connections: no provider for host");
+            return Ok(vec![]);
+        }
+        debug!(host = %hostname, providers = ?providers, "app_connections: matched providers");
+
+        let connections = match connection_pool(&agent.secret_mode, selection) {
+            InjectionPool::RuleSelected => {
+                // Step 8 (rule-driven): a SELECTIVE agent's allow rules name SPECIFIC
+                // connections (`kind=connection`) and/or ALL connections of a provider
+                // at a level (`kind=app` + `connection_scope`). Gated on `secret_mode`
+                // — an ALL-mode agent always takes the full merge below, so a rule can
+                // never narrow it. Fetch the ORG/PROJECT-fenced pool and keep the
+                // connections a rule selects: a named id, or a (provider, scope) match.
+                // Attach the per-connection sessionPolicy only for the SPECIFIC ones
+                // (the "all-at-level" ones are unscoped, like all-mode). Org-fence on
+                // the FETCH → a foreign id/scope can't pull a foreign connection.
+                let (org_result, project_result) = tokio::join!(
+                    db::find_app_connections_by_org(&self.pool, &agent.organization_id),
+                    db::find_app_connections_by_project(&self.pool, &agent.project_id),
+                );
+                let mut merged = org_result.map_err(db_err)?;
+                merged.extend(project_result.map_err(db_err)?);
+                merged.retain(|c| {
+                    selection.connections.contains_key(&c.id)
+                        || selection
+                            .app_scopes
+                            .iter()
+                            .any(|(provider, scope)| *provider == c.provider && *scope == c.scope)
+                });
+                for c in &mut merged {
+                    if let Some(policy) = selection.connections.get(&c.id) {
+                        c.session_policy = policy.clone();
+                    }
+                }
+                merged
+            }
+            // A SELECTIVE agent with no rule-driven selection reaches no app
+            // connections → none injected. As with secrets, WHICH connections a
+            // selective agent gets comes solely from its v2 allow rules — there is
+            // no `agent_app_connections` fallback since step 10.
+            InjectionPool::Empty => Vec::new(),
+            InjectionPool::All => {
+                let (org_result, project_result) = tokio::join!(
+                    db::find_app_connections_by_org(&self.pool, &agent.organization_id),
+                    db::find_app_connections_by_project(&self.pool, &agent.project_id),
+                );
+                let mut merged = org_result.map_err(db_err)?;
+                merged.extend(project_result.map_err(db_err)?);
+                merged
+            }
+        };
+
+        let matching: Vec<db::AppConnectionRow> = connections
+            .into_iter()
+            .filter(|c| providers.contains(&c.provider.as_str()))
+            .collect();
+
+        debug!(host = %hostname, count = matching.len(), "app_connections: deferred connections");
+        Ok(matching)
+    }
+
+    /// Resolve app connection injection rules for a single request.
+    /// Called per-request with the cached `app_connections` (already filtered to
+    /// providers matching the hostname at cache time by `resolve_app_connections`).
+    // request_path added for cross-provider disambiguation on shared hosts
+    #[expect(clippy::too_many_arguments)]
+    pub(crate) async fn resolve_app_injection_for_request(
+        &self,
+        app_connections: &[db::AppConnectionRow],
+        hostname: &str,
+        request_path: Option<&str>,
+        connection_id: Option<&str>,
+        organization_id: &str,
+        project_id: &str,
+        cache: &dyn CacheStore,
+    ) -> Result<AppConnectionResult, ConnectError> {
+        if app_connections.is_empty() {
+            return Ok(AppConnectionResult::NoConnections);
+        }
+
+        // If a specific connection ID is requested, use that one
+        if let Some(conn_id) = connection_id {
+            let Some(conn) = app_connections.iter().find(|c| c.id == conn_id) else {
+                // Connection was removed or access revoked — return the valid options
+                return Ok(AppConnectionResult::NotFound {
+                    connections: app_connections
+                        .iter()
+                        .map(ConnectionChoice::from_row)
+                        .collect(),
+                });
+            };
+            return self
+                .resolve_connection_injections(conn, hostname, organization_id, project_id, cache)
+                .await;
+        }
+
+        // On path-scoped shared hosts (e.g. www.googleapis.com, where Gmail,
+        // Calendar and Drive coexist by path), narrow to the connections whose
+        // provider serves THIS request path before the ambiguity check — so two
+        // same-provider connections (e.g. two Gmail accounts) don't make
+        // Calendar/Drive requests, which are unambiguous by path, falsely
+        // ambiguous. Dedicated hosts and no-path cases fall through unchanged.
+        let candidates = narrow_connections_by_path(app_connections, hostname, request_path);
+        let app_connections: &[db::AppConnectionRow] = &candidates;
+
+        // Single connection — use it directly
+        if app_connections.len() == 1 {
+            return self
+                .resolve_connection_injections(
+                    &app_connections[0],
+                    hostname,
+                    organization_id,
+                    project_id,
+                    cache,
+                )
+                .await;
+        }
+
+        // Multiple connections — check for ambiguity per provider
+        // Group by provider; if each provider has exactly 1 connection, no ambiguity
+        let mut by_provider: std::collections::HashMap<&str, Vec<&db::AppConnectionRow>> =
+            std::collections::HashMap::new();
+        for conn in app_connections {
+            by_provider
+                .entry(conn.provider.as_str())
+                .or_default()
+                .push(conn);
+        }
+
+        if by_provider.values().all(|conns| conns.len() == 1) {
+            // Check for cross-provider path overlap before resolving
+            if let Some(path) = request_path {
+                let matching_providers: Vec<&str> = by_provider
+                    .keys()
+                    .copied()
+                    .filter(|provider| {
+                        apps::provider_matches_host_and_path(provider, hostname, path)
+                    })
+                    .collect();
+
+                if matching_providers.len() > 1 {
+                    let connections = app_connections
+                        .iter()
+                        .filter(|c| matching_providers.contains(&c.provider.as_str()))
+                        .map(ConnectionChoice::from_row)
+                        .collect();
+                    return Ok(AppConnectionResult::MultipleProviders { connections });
+                }
+            }
+
+            // Each provider has exactly one connection — no ambiguity, resolve all
+            let mut rules = Vec::new();
+            let mut earliest_expires_at: Option<i64> = None;
+            let mut resolved_rewrite_host: Option<String> = None;
+            let mut resolved_label: Option<String> = None;
+            let mut resolved_finalizer: Option<apps::RequestFinalizer> = None;
+            let mut resolved_body_transform: Option<apps::BodyTransform> = None;
+            let mut resolved_provider: Option<String> = None;
+            let mut resolved_session_policy: Option<serde_json::Value> = None;
+            for conn in app_connections {
+                if let AppConnectionResult::Rules {
+                    rules: r,
+                    token_expires_at,
+                    rewrite_host,
+                    connection_label,
+                    finalizer,
+                    body_transform,
+                    provider,
+                    session_policy,
+                } = self
+                    .resolve_connection_injections(
+                        conn,
+                        hostname,
+                        organization_id,
+                        project_id,
+                        cache,
+                    )
+                    .await?
+                {
+                    rules.extend(r);
+                    if rewrite_host.is_some() {
+                        resolved_rewrite_host = rewrite_host;
+                    }
+                    if resolved_label.is_none() {
+                        resolved_label = connection_label;
+                    }
+                    if finalizer.is_some() {
+                        resolved_finalizer = finalizer;
+                    }
+                    if body_transform.is_some() {
+                        resolved_body_transform = body_transform;
+                    }
+                    // Tie the granular policy to the connection that actually
+                    // serves THIS host — not merely the first to yield rules. A
+                    // non-serving connection (e.g. a GitHub connection on a
+                    // Dropbox request) still returns `Rules` carrying its own
+                    // policy, so adopting the first would mis-apply it.
+                    let serves_host = request_path
+                        .map(|p| apps::provider_matches_host_and_path(&provider, hostname, p))
+                        .unwrap_or(false);
+                    if serves_host {
+                        resolved_session_policy = session_policy;
+                    }
+                    if resolved_provider.is_none() {
+                        resolved_provider = Some(provider);
+                    }
+                    match (earliest_expires_at, token_expires_at) {
+                        (None, exp) => earliest_expires_at = exp,
+                        (Some(cur), Some(exp)) if exp < cur => earliest_expires_at = Some(exp),
+                        _ => {}
+                    }
+                }
+            }
+            return Ok(AppConnectionResult::Rules {
+                rules,
+                token_expires_at: earliest_expires_at,
+                rewrite_host: resolved_rewrite_host,
+                connection_label: resolved_label,
+                finalizer: resolved_finalizer,
+                body_transform: resolved_body_transform,
+                provider: resolved_provider.unwrap_or_default(),
+                session_policy: resolved_session_policy,
+            });
+        }
+
+        // Truly ambiguous — return all connections for the caller to report
+        Ok(AppConnectionResult::Ambiguous {
+            connections: app_connections
+                .iter()
+                .map(ConnectionChoice::from_row)
+                .collect(),
+        })
+    }
+
+    /// Resolve injection rules from a single app connection, with caching.
+    /// Decrypts credentials, resolves/refreshes the access token, and builds
+    /// injection rules. Results are cached per-connection to avoid redundant
+    /// decryption on subsequent requests.
+    async fn resolve_connection_injections(
+        &self,
+        conn: &db::AppConnectionRow,
+        hostname: &str,
+        organization_id: &str,
+        project_id: &str,
+        cache: &dyn CacheStore,
+    ) -> Result<AppConnectionResult, ConnectError> {
+        let policy_suffix = conn
+            .session_policy
+            .as_ref()
+            .map(|sp| format!(":{sp}"))
+            .unwrap_or_default();
+        let cache_key = format!(
+            "app_injection:{organization_id}:{project_id}:{}:{hostname}{policy_suffix}",
+            conn.id
+        );
+
+        if let Some(cached) = cache.get::<CachedAppInjection>(&cache_key).await {
+            debug!(connection_id = %conn.id, "app injection: cache hit");
+            return Ok(AppConnectionResult::Rules {
+                rules: cached.rules,
+                token_expires_at: None,
+                rewrite_host: cached.rewrite_host,
+                connection_label: cached.connection_label,
+                finalizer: apps::finalizer_for_provider(&conn.provider),
+                body_transform: apps::body_transform_for_provider(&conn.provider),
+                provider: conn.provider.clone(),
+                session_policy: conn.session_policy.clone(),
+            });
+        }
+
+        let Some(ref encrypted_creds) = conn.credentials else {
+            return Ok(AppConnectionResult::NoConnections);
+        };
+
+        let decrypted_json = match self.crypto.decrypt(encrypted_creds).await {
+            Ok(v) => v,
+            Err(e) => {
+                warn!(
+                    connection_id = %conn.id,
+                    provider = %conn.provider,
+                    error = ?e,
+                    "app connection decrypt failed (wrong key or format mismatch)"
+                );
+                return Ok(AppConnectionResult::NoConnections);
+            }
+        };
+
+        // Parse credentials once — reused below for the host gate, credential
+        // headers/params, and host rewrite.
+        let creds: Option<serde_json::Value> = serde_json::from_str(&decrypted_json)
+            .map_err(|e| {
+                warn!(provider = %conn.provider, error = %e, "failed to parse app connection credentials JSON");
+            })
+            .ok();
+
+        // For rules with `credential_host_field` (e.g. JFrog's wildcard
+        // `*.jfrog.io`), inject ONLY when the request host equals the
+        // connection's exact stored host. This runs BEFORE token resolution,
+        // rule building, and caching, so a mismatch yields no injection and
+        // writes no cache entry — the token can never leak to another tenant.
+        if credential_host_mismatch(&conn.provider, creds.as_ref(), hostname) {
+            debug!(
+                connection_id = %conn.id,
+                provider = %conn.provider,
+                "credential host mismatch: request host does not match stored host; no injection"
+            );
+            return Ok(AppConnectionResult::NoConnections);
+        }
+
+        let needs_token = apps::needs_access_token(&conn.provider);
+        let (token, expires_at) = if needs_token {
+            let Some(resolved) = self
+                .resolve_access_token(
+                    &decrypted_json,
+                    &conn.provider,
+                    project_id,
+                    &conn.id,
+                    conn.session_policy.as_ref(),
+                )
+                .await
+            else {
+                return Ok(AppConnectionResult::NoConnections);
+            };
+            resolved
+        } else {
+            (String::new(), None)
+        };
+
+        let mut rules: Vec<InjectionRule> =
+            apps::build_app_injection_rules(&conn.provider, hostname, &token)
+                .into_iter()
+                .map(|(path_pattern, injections)| InjectionRule {
+                    path_pattern,
+                    injections,
+                })
+                .collect();
+
+        // For credential-only providers (no auth rules), ensure at least one
+        // catch-all rule exists so credential headers/params have somewhere to attach.
+        if rules.is_empty()
+            && (!apps::credential_headers(&conn.provider).is_empty()
+                || !apps::credential_params(&conn.provider).is_empty())
+        {
+            let capacity = apps::metadata_headers(&conn.provider).len()
+                + apps::credential_headers(&conn.provider).len()
+                + apps::credential_params(&conn.provider).len();
+            rules.push(InjectionRule {
+                path_pattern: "*".to_string(),
+                injections: Vec::with_capacity(capacity),
+            });
+        }
+
+        // Inject metadata-driven headers defined in the provider registry
+        if let Some(ref metadata) = conn.metadata {
+            for mh in apps::metadata_headers(&conn.provider) {
+                if let Some(value) = metadata.get(mh.metadata_key).and_then(|v| v.as_str()) {
+                    for rule in &mut rules {
+                        rule.injections.push(Injection::SetHeader {
+                            name: mh.header_name.to_string(),
+                            value: value.to_string(),
+                        });
+                    }
+                }
+            }
+        }
+
+        // Inject credential-driven headers (e.g., DD-API-KEY from credentials.apiKey)
+        if let Some(ref creds) = creds {
+            for ch in apps::credential_headers(&conn.provider) {
+                if let Some(value) = creds.get(ch.credential_field).and_then(|v| v.as_str()) {
+                    for rule in &mut rules {
+                        rule.injections.push(Injection::SetHeader {
+                            name: ch.header_name.to_string(),
+                            value: value.to_string(),
+                        });
+                    }
+                }
+            }
+
+            // Inject credential-driven query params (e.g., Trello's ?key=...&token=...)
+            for cp in apps::credential_params(&conn.provider) {
+                if let Some(value) = creds.get(cp.credential_field).and_then(|v| v.as_str()) {
+                    for rule in &mut rules {
+                        rule.injections.push(Injection::SetParam {
+                            name: cp.param_name.to_string(),
+                            value: value.to_string(),
+                        });
+                    }
+                }
+            }
+        }
+
+        let rewrite_host = creds.and_then(|c| apps::rewrite_host(&conn.provider, &c, hostname));
+
+        // Cache with TTL = min(CACHE_TTL, token remaining lifetime).
+        // Skip caching if token is already expired — the stale token would cause
+        // upstream 401s, and re-resolving gives a chance to refresh.
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock")
+            .as_secs() as i64;
+        let ttl = match expires_at {
+            Some(exp) if exp > now => ((exp - now) as u64).min(CACHE_TTL_SECS),
+            Some(_) => 0, // expired — don't cache
+            None => CACHE_TTL_SECS,
+        };
+        if ttl > 0 {
+            cache
+                .set(
+                    &cache_key,
+                    &CachedAppInjection {
+                        rules: rules.clone(),
+                        rewrite_host: rewrite_host.clone(),
+                        connection_label: conn.label.clone(),
+                    },
+                    ttl,
+                )
+                .await;
+        }
+
+        Ok(AppConnectionResult::Rules {
+            rules,
+            token_expires_at: expires_at,
+            rewrite_host,
+            connection_label: conn.label.clone(),
+            finalizer: apps::finalizer_for_provider(&conn.provider),
+            body_transform: apps::body_transform_for_provider(&conn.provider),
+            provider: conn.provider.clone(),
+            session_policy: conn.session_policy.clone(),
+        })
+    }
+
+    /// Check if the project or org has any credentials (secrets or app connections) for this
+    /// host that the agent can't access. Used to distinguish "not connected" from
+    /// "connected but agent lacks access" in selective mode.
+    async fn has_available_credentials(&self, agent: &db::AgentRow, hostname: &str) -> bool {
+        // Check 1: project or org has manual secrets matching this host
+        match db::find_secrets_by_project(&self.pool, &agent.project_id).await {
+            Ok(secrets) => {
+                if secrets.iter().any(|s| {
+                    secret_inject::secret_host_patterns(&s.type_, &s.host_pattern)
+                        .iter()
+                        .any(|p| host_matches(hostname, p))
+                }) {
+                    return true;
+                }
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "has_available_credentials: secrets query failed");
+            }
+        }
+
+        // Also check org-level secrets
+        match db::find_secrets_by_org(&self.pool, &agent.organization_id).await {
+            Ok(secrets) => {
+                if secrets.iter().any(|s| {
+                    secret_inject::secret_host_patterns(&s.type_, &s.host_pattern)
+                        .iter()
+                        .any(|p| host_matches(hostname, p))
+                }) {
+                    return true;
+                }
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "has_available_credentials: org secrets query failed");
+            }
+        }
+
+        // Check 2: project or org has app connections for this host
+        let providers = apps::providers_for_host(hostname);
+        if providers.is_empty() {
+            return false;
+        }
+
+        let has_project_conns = match db::find_app_connections_by_project(
+            &self.pool,
+            &agent.project_id,
+        )
+        .await
+        {
+            Ok(conns) => conns
+                .iter()
+                .any(|c| providers.contains(&c.provider.as_str())),
+            Err(e) => {
+                tracing::warn!(error = %e, "has_available_credentials: app connections query failed");
+                false
+            }
+        };
+        if has_project_conns {
+            return true;
+        }
+
+        match db::find_app_connections_by_org(&self.pool, &agent.organization_id).await {
+            Ok(conns) => conns
+                .iter()
+                .any(|c| providers.contains(&c.provider.as_str())),
+            Err(e) => {
+                tracing::warn!(error = %e, "has_available_credentials: org app connections query failed");
+                false
+            }
+        }
+    }
+
+    /// Extract access token from decrypted credentials JSON, refreshing if expired.
+    /// Resolves BYOC client credentials from AppConfig if available, falls back to env vars.
+    /// On successful refresh, persists the new credentials back to the database.
+    /// Extract the access token from decrypted credentials, refreshing if expired.
+    /// Returns `(token, expires_at)` — the effective token and its expiry timestamp.
+    async fn resolve_access_token(
+        &self,
+        json: &str,
+        provider: &str,
+        project_id: &str,
+        connection_id: &str,
+        session_policy: Option<&serde_json::Value>,
+    ) -> Option<(String, Option<i64>)> {
+        let mut creds: serde_json::Value = serde_json::from_str(json)
+            .map_err(|e| {
+                warn!(provider = %provider, error = %e, "failed to parse access token credentials JSON");
+            })
+            .ok()?;
+
+        let mut token = creds
+            .get("access_token")
+            .and_then(|v| v.as_str())
+            .map(String::from);
+
+        let mut effective_expires_at = creds.get("expires_at").and_then(|v| v.as_i64());
+
+        // Any non-empty session policy means scoped access is required.
+        // Provider-specific interpretation (e.g. GitHub repos) is handled by
+        // ee_apps::try_refresh_credentials, not here.
+        let needs_scoped_token = session_policy
+            .and_then(|sp| sp.as_object())
+            .is_some_and(|obj| !obj.is_empty());
+
+        // Check if token is expired and needs refresh
+        if let Some(expires_at) = effective_expires_at {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("system clock before UNIX epoch")
+                .as_secs() as i64;
+
+            if expires_at < now || needs_scoped_token {
+                let cred_type = creds.get("type").and_then(|v| v.as_str()).unwrap_or("");
+
+                // Try cloud-specific refresh first, then shared credential types
+                let refresh_result = if let Some(r) =
+                    crate::ee_apps::try_refresh_credentials(cred_type, &creds, session_policy).await
+                {
+                    Some(r)
+                } else {
+                    apps::try_refresh_credentials(cred_type, &creds, session_policy).await
+                };
+
+                if let Some(result) = refresh_result {
+                    match result {
+                        Ok((new_token, new_expires_at)) => {
+                            debug!(provider = %provider, cred_type, "refreshed credential");
+                            token = Some(new_token.clone());
+                            effective_expires_at = Some(new_expires_at);
+
+                            if needs_scoped_token {
+                                debug!(provider = %provider, "scoped token generated, skipping persist");
+                            } else {
+                                creds["access_token"] = serde_json::Value::String(new_token);
+                                creds["expires_at"] = serde_json::json!(new_expires_at);
+                                self.persist_refreshed_credentials(connection_id, provider, &creds)
+                                    .await;
+                            }
+                        }
+                        Err(e) => {
+                            debug!(provider = %provider, cred_type, error = ?e, "credential refresh failed");
+                        }
+                    }
+                } else if let Some(refresh_token) =
+                    creds.get("refresh_token").and_then(|v| v.as_str())
+                {
+                    // Authorized user / default: refresh via OAuth refresh_token
+                    if let Some(config) = apps::refresh_config(provider) {
+                        let byoc = self
+                            .resolve_byoc_credentials(project_id, provider, connection_id)
+                            .await;
+                        let (byoc_id, byoc_secret) = match &byoc {
+                            Some((id, secret)) => (Some(id.as_str()), Some(secret.as_str())),
+                            None => (None, None),
+                        };
+
+                        match apps::refresh_access_token(
+                            config,
+                            refresh_token,
+                            byoc_id,
+                            byoc_secret,
+                        )
+                        .await
+                        {
+                            Ok((new_token, new_expires_at, new_refresh_token)) => {
+                                debug!(provider = %provider, "refreshed expired token");
+                                token = Some(new_token.clone());
+                                effective_expires_at = Some(new_expires_at);
+
+                                creds["access_token"] = serde_json::Value::String(new_token);
+                                creds["expires_at"] = serde_json::json!(new_expires_at);
+                                if let Some(new_rt) = new_refresh_token {
+                                    creds["refresh_token"] = serde_json::Value::String(new_rt);
+                                }
+                                self.persist_refreshed_credentials(connection_id, provider, &creds)
+                                    .await;
+                            }
+                            Err(e) => {
+                                debug!(provider = %provider, error = ?e, "token refresh failed");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        token.map(|t| (t, effective_expires_at))
+    }
+
+    /// Encrypt and persist refreshed credentials back to the database.
+    /// Failures are logged but do not prevent the current request from succeeding —
+    /// the refreshed token is already available in memory.
+    async fn persist_refreshed_credentials(
+        &self,
+        connection_id: &str,
+        provider: &str,
+        creds: &serde_json::Value,
+    ) {
+        let Ok(json) = serde_json::to_string(creds) else {
+            debug!(provider = %provider, "failed to serialize refreshed credentials");
+            return;
+        };
+        match self.crypto.encrypt(&json).await {
+            Ok(encrypted) => {
+                match db::update_app_connection_credentials(&self.pool, connection_id, &encrypted)
+                    .await
+                {
+                    Ok(()) => {
+                        debug!(provider = %provider, "persisted refreshed credentials");
+                    }
+                    Err(e) => {
+                        debug!(provider = %provider, error = %e, "failed to persist refreshed credentials");
+                    }
+                }
+            }
+            Err(e) => {
+                debug!(provider = %provider, error = ?e, "failed to encrypt refreshed credentials");
+            }
+        }
+    }
+
+    /// Resolve BYOC client credentials for refreshing a connection.
+    ///
+    /// Prefers the config that *minted* the connection (the provenance link):
+    /// its refresh token is bound to that OAuth client, so refresh must reuse it
+    /// even when the tier order below would now pick a different row (e.g. an
+    /// org-minted connection whose project later added its own config). Falls
+    /// back to the project's own AppConfig row, then the organization-level row
+    /// (EE editions only), for connections with no link (env-minted, no-config
+    /// methods, or pre-dating the link) *and* for a link that resolves but
+    /// yields no usable pair (config disabled, wrong provider, or missing
+    /// clientId/clientSecret). The org tier is consulted whenever the project
+    /// tier yields no usable pair — row absent OR present but missing
+    /// clientId/clientSecret — the same completeness semantics as the Node
+    /// resolver's project → org chain. Returns
+    /// `Some((client_id, client_secret))` when a usable pair exists.
+    async fn resolve_byoc_credentials(
+        &self,
+        project_id: &str,
+        provider: &str,
+        connection_id: &str,
+    ) -> Option<(String, String)> {
+        let linked_row = db::find_app_config_by_connection(&self.pool, connection_id, provider)
+            .await
+            .map_err(|e| warn!(error = %e, "failed to query linked BYOC app config"))
+            .ok()
+            .flatten();
+        if let Some(row) = linked_row {
+            if let Some(pair) = self.extract_byoc_pair(row).await {
+                return Some(pair);
+            }
+            debug!(
+                connection_id = %connection_id,
+                provider = %provider,
+                "linked app config yielded no usable BYOC pair; falling back to project/org chain"
+            );
+        }
+
+        let project_row = db::find_app_config(&self.pool, project_id, provider)
+            .await
+            .map_err(|e| warn!(error = %e, "failed to query BYOC app config"))
+            .ok()
+            .flatten();
+        if let Some(row) = project_row {
+            if let Some(pair) = self.extract_byoc_pair(row).await {
+                return Some(pair);
+            }
+        }
+
+        let org_row = self.find_org_app_config(project_id, provider).await?;
+        self.extract_byoc_pair(org_row).await
+    }
+
+    /// Extract a usable `(client_id, client_secret)` pair from an AppConfig row.
+    async fn extract_byoc_pair(&self, config: db::AppConfigRow) -> Option<(String, String)> {
+        // clientId is in settings (plain JSON)
+        let client_id = config
+            .settings
+            .as_ref()
+            .and_then(|s| s.get("clientId"))
+            .and_then(|v| v.as_str())
+            .map(String::from)?;
+
+        // clientSecret is in credentials (encrypted)
+        let encrypted = config.credentials.as_deref()?;
+        let decrypted = self
+            .crypto
+            .decrypt(encrypted)
+            .await
+            .map_err(|e| warn!(error = %e, "failed to decrypt BYOC credentials"))
+            .ok()?;
+        let secrets: serde_json::Value = serde_json::from_str(&decrypted)
+            .map_err(|e| warn!(error = %e, "failed to parse BYOC credentials JSON"))
+            .ok()?;
+        let client_secret = secrets
+            .get("clientSecret")
+            .and_then(|v| v.as_str())
+            .map(String::from)?;
+
+        Some((client_id, client_secret))
+    }
+
+    /// Org-level BYOC fallback: the app config of the project's organization.
+    /// EE editions only — OSS has no way to create org-level app configs.
+    #[cfg(not(edition_oss))]
+    async fn find_org_app_config(
+        &self,
+        project_id: &str,
+        provider: &str,
+    ) -> Option<db::AppConfigRow> {
+        let organization_id = db::find_organization_id_by_project(&self.pool, project_id)
+            .await
+            .map_err(|e| warn!(error = %e, "failed to resolve org for BYOC fallback"))
+            .ok()
+            .flatten()?;
+        db::find_app_config_by_org(&self.pool, &organization_id, provider)
+            .await
+            .map_err(|e| warn!(error = %e, "failed to query org BYOC app config"))
+            .ok()
+            .flatten()
+    }
+
+    /// OSS: no org tier — org-level app configs are an EE surface.
+    #[cfg(edition_oss)]
+    async fn find_org_app_config(
+        &self,
+        _project_id: &str,
+        _provider: &str,
+    ) -> Option<db::AppConfigRow> {
+        None
+    }
+}
+
+// ── Error helpers ──────────────────────────────────────────────────────
+
+fn db_err(e: anyhow::Error) -> ConnectError {
+    ConnectError::Internal(format!("db error: {e:#}"))
+}
+
+// ── Cached resolution ───────────────────────────────────────────────────
+
+/// Resolve with caching. Checks the generic `CacheStore` first, then
+/// queries the DB if needed. The cache key is namespaced as
+/// `connect:{project_id}:{agent_token}:{hostname}` so that cache
+/// invalidation can target all entries for a project by prefix.
+pub(crate) async fn resolve(
+    agent_token: &str,
+    hostname: &str,
+    policy_engine: &PolicyEngine,
+    cache: &dyn CacheStore,
+) -> Result<ConnectResponse, ConnectError> {
+    // Look up agent first — needed for project_id in cache key.
+    let agent = policy_engine.find_agent(agent_token).await?;
+
+    let cache_key = format!(
+        "connect:{}:{}:{agent_token}:{hostname}",
+        agent.organization_id, agent.project_id
+    );
+
+    // Check cache
+    if let Some(response) = cache.get::<ConnectResponse>(&cache_key).await {
+        debug!(host = %hostname, intercept = response.intercept, "resolve: cache hit");
+        return Ok(response);
+    }
+
+    debug!(host = %hostname, "resolve: cache miss, querying DB");
+
+    // Query the database (agent already resolved, avoids re-querying)
+    let response = policy_engine.resolve_uncached(&agent, hostname).await?;
+
+    // Cache the response
+    cache.set(&cache_key, &response, CACHE_TTL_SECS).await;
+
+    Ok(response)
+}
+
+/// Resolve with caching, using a known `project_id` to skip the agent DB
+/// query on cache hits. Designed for per-request resolution inside MITM
+/// tunnels where the agent identity is already known from CONNECT time.
+///
+/// On cache hit: zero DB queries (just a cache lookup).
+/// On cache miss: falls back to full resolution (agent query + DB).
+pub(crate) async fn resolve_from_cache(
+    organization_id: &str,
+    project_id: &str,
+    agent_token: &str,
+    hostname: &str,
+    policy_engine: &PolicyEngine,
+    cache: &dyn CacheStore,
+) -> Result<ConnectResponse, ConnectError> {
+    let cache_key = format!("connect:{organization_id}:{project_id}:{agent_token}:{hostname}");
+
+    if let Some(response) = cache.get::<ConnectResponse>(&cache_key).await {
+        return Ok(response);
+    }
+
+    debug!(host = %hostname, "resolve_from_cache: cache miss, querying DB");
+
+    let agent = policy_engine.find_agent(agent_token).await?;
+    let response = policy_engine.resolve_uncached(&agent, hostname).await?;
+    cache.set(&cache_key, &response, CACHE_TTL_SECS).await;
+
+    Ok(response)
+}
+
+// ── Connection narrowing ─────────────────────────────────────────────────
+
+/// Narrow app connections to those whose provider serves THIS request path,
+/// but only on shared, path-scoped hosts (e.g. `www.googleapis.com`, where
+/// Gmail, Calendar and Drive coexist by path prefix).
+///
+/// Without this, two connections of a single provider (e.g. two Gmail accounts)
+/// make *every* path on the shared host ambiguous — including Calendar/Drive
+/// requests that are unambiguous by path — forcing an `x-agentvault-connection-id`
+/// header on requests that need none. Dedicated hosts (`gmail.googleapis.com`,
+/// no path prefix) are not path-scoped, so the full set is returned unchanged.
+///
+/// Returns the full set (borrowed) when there is no request path, the host is
+/// not path-scoped, or no connection serves the path — preserving prior
+/// behavior in every case except the shared-host mismatch this fixes.
+fn narrow_connections_by_path<'a>(
+    connections: &'a [db::AppConnectionRow],
+    hostname: &str,
+    request_path: Option<&str>,
+) -> Cow<'a, [db::AppConnectionRow]> {
+    // Narrowing can only change the outcome with at least two connections to
+    // disambiguate; skip the work — and the clone — for the common 0/1 case.
+    if connections.len() <= 1 {
+        return Cow::Borrowed(connections);
+    }
+    let Some(path) = request_path else {
+        return Cow::Borrowed(connections);
+    };
+    if !apps::host_has_path_scoped_providers(hostname) {
+        return Cow::Borrowed(connections);
+    }
+    let narrowed: Vec<db::AppConnectionRow> = connections
+        .iter()
+        .filter(|c| apps::provider_matches_host_and_path(&c.provider, hostname, path))
+        .cloned()
+        .collect();
+    if narrowed.is_empty() {
+        Cow::Borrowed(connections)
+    } else {
+        Cow::Owned(narrowed)
+    }
+}
+
+// ── Host matching ───────────────────────────────────────────────────────
+
+/// Returns `true` when the credential's stored host does not match the
+/// request host, meaning injection must be skipped.
+///
+/// For rules with `credential_host_field` (e.g. JFrog's `*.jfrog.io`),
+/// injection is allowed ONLY when the request host equals the stored host.
+/// Returns `false` for rules without `credential_host_field` (no check
+/// needed) and for rules whose stored host matches the request host.
+///
+/// The comparison is on the FULL normalized host — never a single DNS label —
+/// so `nanos.jfrog.io` does not match `evil.jfrog.io`.
+fn credential_host_mismatch(
+    provider: &str,
+    creds: Option<&serde_json::Value>,
+    hostname: &str,
+) -> bool {
+    let Some(field) = apps::credential_host_field(provider, hostname) else {
+        return false; // not a host-gated rule — injection always allowed
+    };
+    let stored = creds
+        .and_then(|c| c.get(field))
+        .and_then(|v| v.as_str())
+        .map(apps::normalize_host)
+        .unwrap_or_default();
+    stored.is_empty() || apps::normalize_host(hostname) != stored
+}
+
+/// Check if a requested hostname matches a secret or policy host pattern.
+///
+/// Supports an exact match, or a single `*` wildcard anywhere in the pattern:
+/// - leading — `*.example.com` matches `api.example.com` (but not the apex
+///   `example.com`),
+/// - mid-string — `s3.*.amazonaws.com` matches `s3.us-east-1.amazonaws.com`
+///   (the region label).
+///
+/// The length guard keeps the prefix and suffix from overlapping, so the `*`
+/// must stand in for at least one character: the apex is still excluded for
+/// `*.example.com`, and a region is still required for `s3.*.amazonaws.com`.
+///
+/// Matching is case-insensitive, since DNS host names are.
+///
+/// `pub(crate)` so the policy engine reuses the exact host matcher for its
+/// network targets. Behavior is unchanged.
+pub(crate) fn host_matches(request_host: &str, pattern: &str) -> bool {
+    match pattern.split_once('*') {
+        None => request_host.eq_ignore_ascii_case(pattern),
+        Some((prefix, suffix)) => {
+            // `get(..)` keeps the slices on char boundaries, so a non-ASCII
+            // host can never panic — it just won't match an ASCII pattern.
+            request_host.len() >= prefix.len() + suffix.len()
+                && request_host
+                    .get(..prefix.len())
+                    .is_some_and(|p| p.eq_ignore_ascii_case(prefix))
+                && request_host
+                    .get(request_host.len() - suffix.len()..)
+                    .is_some_and(|s| s.eq_ignore_ascii_case(suffix))
+        }
+    }
+}
+
+// ── Tests ───────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    async fn new_store() -> std::sync::Arc<dyn crate::cache::CacheStore> {
+        crate::cache::create_store().await.unwrap()
+    }
+
+    // ── Injection pool (step 10) ────────────────────────────────────────
+    // Since the old per-agent grant tables became unread, `secret_mode` +
+    // the v2 selection are the WHOLE story. The load-bearing property is that
+    // a selective agent with nothing selected injects NOTHING — if that ever
+    // fell back to the all-mode merge, a deliberately restricted agent would
+    // silently receive every credential in the project and org.
+
+    fn selection_with_secret(id: &str) -> db::InjectSelection {
+        db::InjectSelection {
+            secret_ids: std::collections::HashSet::from([id.to_string()]),
+            ..Default::default()
+        }
+    }
+
+    fn selection_with_connection(id: &str) -> db::InjectSelection {
+        db::InjectSelection {
+            connections: std::collections::HashMap::from([(id.to_string(), None)]),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn selective_agent_without_a_selection_injects_nothing() {
+        let empty = db::InjectSelection::default();
+        assert_eq!(
+            secret_pool(SECRET_MODE_SELECTIVE, &empty),
+            InjectionPool::Empty,
+            "a selective agent with no secret selection must never fall back to the all-mode pool"
+        );
+        assert_eq!(
+            connection_pool(SECRET_MODE_SELECTIVE, &empty),
+            InjectionPool::Empty,
+            "a selective agent with no connection selection must never fall back to the all-mode pool"
+        );
+    }
+
+    #[test]
+    fn selective_agent_with_a_selection_draws_the_narrowed_pool() {
+        assert_eq!(
+            secret_pool(SECRET_MODE_SELECTIVE, &selection_with_secret("sec-1")),
+            InjectionPool::RuleSelected
+        );
+        assert_eq!(
+            secret_pool(
+                SECRET_MODE_SELECTIVE,
+                &db::InjectSelection {
+                    secret_scopes: vec!["project".to_string()],
+                    ..Default::default()
+                }
+            ),
+            InjectionPool::RuleSelected,
+            "a whole-level secret target selects too, not just named ids"
+        );
+        assert_eq!(
+            connection_pool(SECRET_MODE_SELECTIVE, &selection_with_connection("conn-1")),
+            InjectionPool::RuleSelected
+        );
+        assert_eq!(
+            connection_pool(
+                SECRET_MODE_SELECTIVE,
+                &db::InjectSelection {
+                    app_scopes: vec![("github".to_string(), "project".to_string())],
+                    ..Default::default()
+                }
+            ),
+            InjectionPool::RuleSelected,
+            "a provider+level app target selects too"
+        );
+    }
+
+    #[test]
+    fn all_mode_is_never_narrowed_by_rules() {
+        // The inverse guard: rules gate the REQUEST for an all-mode agent, they
+        // must not shrink its pool (it would lose partner / budget-metered /
+        // other host-matched credentials the selection never names).
+        for selection in [
+            db::InjectSelection::default(),
+            selection_with_secret("sec-1"),
+            selection_with_connection("conn-1"),
+        ] {
+            assert_eq!(secret_pool("all", &selection), InjectionPool::All);
+            assert_eq!(connection_pool("all", &selection), InjectionPool::All);
+        }
+        // An unknown/legacy mode string is treated as all-mode, matching the
+        // column's default — never as "selective with nothing".
+        assert_eq!(
+            secret_pool("", &db::InjectSelection::default()),
+            InjectionPool::All
+        );
+    }
+
+    #[tokio::test]
+    async fn cache_hit_returns_cached_response() {
+        let store = new_store().await;
+        let response = ConnectResponse {
+            intercept: true,
+            injection_rules: vec![],
+            app_connections: vec![],
+            project_id: None,
+            organization_id: None,
+            agent_id: None,
+            agent_name: None,
+            agent_identifier: None,
+            access_restricted: false,
+            plan: "pro".to_string(),
+            claim_token: None,
+            budget_bindings: vec![],
+            policy_rules_v2: db::PolicyV2Rules::default(),
+            available_apps: db::AvailableApps::default(),
+        };
+
+        store
+            .set(
+                "connect:acc_123:aoc_token1:api.anthropic.com",
+                &response,
+                60,
+            )
+            .await;
+
+        let cached: Option<ConnectResponse> = store
+            .get("connect:acc_123:aoc_token1:api.anthropic.com")
+            .await;
+        assert_eq!(cached, Some(response));
+    }
+
+    #[tokio::test]
+    async fn cache_miss_returns_none() {
+        let store = new_store().await;
+        let cached: Option<ConnectResponse> = store.get("connect:missing:host").await;
+        assert!(cached.is_none());
+    }
+
+    // ── resolve_from_cache ────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn resolve_from_cache_hits_with_correct_key() {
+        let store = new_store().await;
+        let response = ConnectResponse {
+            intercept: true,
+            injection_rules: vec![InjectionRule {
+                path_pattern: "*".to_string(),
+                injections: vec![],
+            }],
+            app_connections: vec![],
+            project_id: Some("proj_1".to_string()),
+            organization_id: Some("org_1".to_string()),
+            agent_id: Some("agent_1".to_string()),
+            agent_name: Some("Test".to_string()),
+            agent_identifier: None,
+            access_restricted: false,
+            plan: "pro".to_string(),
+            claim_token: None,
+            budget_bindings: vec![],
+            policy_rules_v2: db::PolicyV2Rules::default(),
+            available_apps: db::AvailableApps::default(),
+        };
+
+        // Pre-populate cache with the key format that resolve() uses
+        store
+            .set(
+                "connect:org_1:proj_1:aoc_token1:api.example.com",
+                &response,
+                60,
+            )
+            .await;
+
+        // resolve_from_cache should hit using the same key format.
+        // On cache hit it never touches PolicyEngine, so we can't pass one —
+        // but we can verify the key is correct by checking the cache directly.
+        let cached: Option<ConnectResponse> = store
+            .get(&format!(
+                "connect:{}:{}:{}:{}",
+                "org_1", "proj_1", "aoc_token1", "api.example.com"
+            ))
+            .await;
+        assert!(cached.is_some());
+        assert_eq!(cached.unwrap().injection_rules.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn cache_round_trip_with_access_restricted() {
+        let store = new_store().await;
+        let response = ConnectResponse {
+            intercept: true,
+            injection_rules: vec![],
+            app_connections: vec![],
+            project_id: Some("proj_restricted".to_string()),
+            organization_id: Some("org_restricted".to_string()),
+            agent_id: Some("agent_selective".to_string()),
+            agent_name: Some("Selective Agent".to_string()),
+            agent_identifier: None,
+            access_restricted: true,
+            plan: "pro".to_string(),
+            claim_token: None,
+            budget_bindings: vec![],
+            policy_rules_v2: db::PolicyV2Rules::default(),
+            available_apps: db::AvailableApps::default(),
+        };
+
+        store
+            .set(
+                "connect:org_restricted:proj_restricted:aoc_t:api.resend.com",
+                &response,
+                60,
+            )
+            .await;
+
+        let cached: Option<ConnectResponse> = store
+            .get("connect:org_restricted:proj_restricted:aoc_t:api.resend.com")
+            .await;
+        let cached = cached.expect("should be cached");
+        assert!(cached.access_restricted);
+        assert_eq!(cached.project_id.as_deref(), Some("proj_restricted"));
+    }
+
+    // ── host_matches ────────────────────────────────────────────────────
+
+    #[test]
+    fn host_exact_match() {
+        assert!(host_matches("api.anthropic.com", "api.anthropic.com"));
+        assert!(!host_matches("api.anthropic.com", "other.com"));
+    }
+
+    #[test]
+    fn host_wildcard_match() {
+        assert!(host_matches("api.example.com", "*.example.com"));
+        assert!(host_matches("sub.example.com", "*.example.com"));
+        assert!(!host_matches("example.com", "*.example.com"));
+        assert!(!host_matches("api.other.com", "*.example.com"));
+    }
+
+    #[test]
+    fn host_wildcard_no_match_without_dot() {
+        assert!(!host_matches("notexample.com", "*.example.com"));
+    }
+
+    #[test]
+    fn host_midstring_wildcard() {
+        // Mid-string wildcard: the region label in AWS regional endpoints.
+        assert!(host_matches(
+            "s3.us-east-1.amazonaws.com",
+            "s3.*.amazonaws.com"
+        ));
+        assert!(host_matches(
+            "lambda.eu-west-1.amazonaws.com",
+            "lambda.*.amazonaws.com"
+        ));
+        // Wrong service prefix, or the apex with no region label, must not match.
+        assert!(!host_matches(
+            "ec2.us-east-1.amazonaws.com",
+            "s3.*.amazonaws.com"
+        ));
+        assert!(!host_matches("s3.amazonaws.com", "s3.*.amazonaws.com"));
+        // Exact patterns (no wildcard) still match only themselves.
+        assert!(host_matches("iam.amazonaws.com", "iam.amazonaws.com"));
+        assert!(!host_matches("s3.amazonaws.com", "iam.amazonaws.com"));
+    }
+
+    #[test]
+    fn host_matching_is_case_insensitive() {
+        // DNS host names are case-insensitive; a mixed-case CONNECT authority
+        // must still match a lowercase rule (exact, leading-*, and mid-string).
+        assert!(host_matches("API.GitHub.com", "api.github.com"));
+        assert!(host_matches("Api.Example.com", "*.example.com"));
+        assert!(host_matches(
+            "S3.US-EAST-1.AMAZONAWS.COM",
+            "s3.*.amazonaws.com"
+        ));
+        assert!(!host_matches("api.evil.com", "api.github.com"));
+    }
+
+    // ── credential_host_mismatch ─────────────────────────────────────────
+
+    #[test]
+    fn credential_host_mismatch_skipped_for_non_gated_provider() {
+        // Rules without credential_host_field are never gated, even if the
+        // hostname looks unrelated to any stored credential.
+        let creds = serde_json::json!({ "access_token": "t" });
+        assert!(!credential_host_mismatch(
+            "github",
+            Some(&creds),
+            "api.github.com"
+        ));
+        assert!(!credential_host_mismatch("resend", None, "api.resend.com"));
+    }
+
+    #[test]
+    fn credential_host_mismatch_false_when_hosts_match() {
+        let creds = serde_json::json!({
+            "access_token": "t",
+            "token": "t",
+            "subdomain": "nanos.jfrog.io",
+        });
+        assert!(!credential_host_mismatch(
+            "jfrog-artifactory",
+            Some(&creds),
+            "nanos.jfrog.io"
+        ));
+    }
+
+    #[test]
+    fn credential_host_mismatch_false_with_scheme_and_case() {
+        // Stored value may be a full URL or differently-cased; both sides are
+        // normalized before comparison.
+        let creds = serde_json::json!({ "subdomain": "https://Nanos.JFrog.io/" });
+        assert!(!credential_host_mismatch(
+            "jfrog-artifactory",
+            Some(&creds),
+            "nanos.jfrog.io"
+        ));
+    }
+
+    #[test]
+    fn credential_host_mismatch_other_tenant() {
+        // A malicious dependency hitting evil.jfrog.io must NOT receive the
+        // token stored for nanos.jfrog.io.
+        let creds = serde_json::json!({ "subdomain": "nanos.jfrog.io" });
+        assert!(credential_host_mismatch(
+            "jfrog-artifactory",
+            Some(&creds),
+            "evil.jfrog.io"
+        ));
+    }
+
+    #[test]
+    fn credential_host_mismatch_missing_or_empty_subdomain() {
+        // No subdomain field at all.
+        let creds = serde_json::json!({ "access_token": "t" });
+        assert!(credential_host_mismatch(
+            "jfrog-artifactory",
+            Some(&creds),
+            "nanos.jfrog.io"
+        ));
+        // Empty subdomain.
+        let empty = serde_json::json!({ "subdomain": "" });
+        assert!(credential_host_mismatch(
+            "jfrog-artifactory",
+            Some(&empty),
+            "nanos.jfrog.io"
+        ));
+        // No credentials at all.
+        assert!(credential_host_mismatch(
+            "jfrog-artifactory",
+            None,
+            "nanos.jfrog.io"
+        ));
+    }
+
+    #[test]
+    fn credential_host_mismatch_similar_subdomain() {
+        // The gate compares the FULL host, so a stored host must not be matched
+        // by a similarly-named subdomain on the same suffix.
+        let creds = serde_json::json!({ "subdomain": "nanos.jfrog.io" });
+        assert!(credential_host_mismatch(
+            "jfrog-artifactory",
+            Some(&creds),
+            "nanos-clone.jfrog.io"
+        ));
+    }
+
+    // ── narrow_connections_by_path ────────────────────────────────────────
+
+    fn conn(id: &str, provider: &str) -> db::AppConnectionRow {
+        db::AppConnectionRow {
+            id: id.into(),
+            provider: provider.into(),
+            scope: "project".into(),
+            credentials: None,
+            label: None,
+            metadata: None,
+            session_policy: None,
+        }
+    }
+
+    fn ids(conns: &[db::AppConnectionRow]) -> Vec<&str> {
+        conns.iter().map(|c| c.id.as_str()).collect()
+    }
+
+    #[test]
+    fn narrow_calendar_request_selects_calendar_connection() {
+        // The bug: with two Gmail accounts, every www.googleapis.com path was
+        // ambiguous. A Calendar request must narrow to the single Calendar
+        // connection so it injects without an x-agentvault-connection-id header.
+        let conns = vec![
+            conn("gmail1", "gmail"),
+            conn("gmail2", "gmail"),
+            conn("cal1", "google-calendar"),
+            conn("drive1", "google-drive"),
+        ];
+        let narrowed = narrow_connections_by_path(
+            &conns,
+            "www.googleapis.com",
+            Some("/calendar/v3/calendars/primary/events"),
+        );
+        assert_eq!(ids(&narrowed), vec!["cal1"]);
+    }
+
+    #[test]
+    fn narrow_gmail_request_keeps_both_gmail_accounts() {
+        // A Gmail request with two Gmail accounts stays genuinely ambiguous —
+        // narrowing keeps both so the caller still asks for a connection-id.
+        let conns = vec![
+            conn("gmail1", "gmail"),
+            conn("gmail2", "gmail"),
+            conn("cal1", "google-calendar"),
+        ];
+        let narrowed = narrow_connections_by_path(
+            &conns,
+            "www.googleapis.com",
+            Some("/gmail/v1/users/me/messages"),
+        );
+        assert_eq!(ids(&narrowed), vec!["gmail1", "gmail2"]);
+    }
+
+    #[test]
+    fn narrow_falls_back_to_full_set_when_nothing_serves_path() {
+        // No connection serves the path → return the full set unchanged rather
+        // than an empty set, preserving prior behavior for that edge case.
+        let conns = vec![conn("gmail1", "gmail"), conn("gmail2", "gmail")];
+        let narrowed =
+            narrow_connections_by_path(&conns, "www.googleapis.com", Some("/calendar/v3"));
+        assert_eq!(ids(&narrowed), vec!["gmail1", "gmail2"]);
+    }
+
+    #[test]
+    fn narrow_leaves_dedicated_host_untouched() {
+        // gmail.googleapis.com is not path-scoped (single provider, no path
+        // prefix), so the full set is returned — two Gmail accounts stay
+        // ambiguous there, which is correct.
+        let conns = vec![conn("gmail1", "gmail"), conn("gmail2", "gmail")];
+        let narrowed = narrow_connections_by_path(
+            &conns,
+            "gmail.googleapis.com",
+            Some("/gmail/v1/users/me/messages"),
+        );
+        assert_eq!(ids(&narrowed), vec!["gmail1", "gmail2"]);
+    }
+
+    #[test]
+    fn narrow_without_request_path_returns_full_set() {
+        let conns = vec![conn("gmail1", "gmail"), conn("cal1", "google-calendar")];
+        let narrowed = narrow_connections_by_path(&conns, "www.googleapis.com", None);
+        assert_eq!(ids(&narrowed), vec!["gmail1", "cal1"]);
+    }
+
+    #[test]
+    fn narrow_leaves_non_google_host_untouched() {
+        let conns = vec![conn("github1", "github")];
+        let narrowed = narrow_connections_by_path(&conns, "api.github.com", Some("/repos/foo/bar"));
+        assert_eq!(ids(&narrowed), vec!["github1"]);
+    }
+
+    #[test]
+    fn narrow_single_connection_is_returned_borrowed_unchanged() {
+        // A single connection can't be disambiguated: it is returned as-is and
+        // without a clone (Borrowed), even on a path-scoped host it does not
+        // serve — the common single-account case stays on the zero-copy path.
+        let conns = vec![conn("gmail1", "gmail")];
+        let narrowed =
+            narrow_connections_by_path(&conns, "www.googleapis.com", Some("/calendar/v3"));
+        assert_eq!(ids(&narrowed), vec!["gmail1"]);
+        assert!(matches!(narrowed, Cow::Borrowed(_)));
+    }
+}

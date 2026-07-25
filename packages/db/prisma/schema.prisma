@@ -1,0 +1,1049 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Organization, Project & User ────────────────────────────────────────
+
+// Cloud-only: an Organization is the billing + collaboration entity. Holds
+// subscription state, Stripe customer, and members. A user may belong to
+// multiple organizations (today: one auto-created on signup; future: invited
+// to others, can create more). Projects under an org share its plan/quotas.
+model Organization {
+  id                  String    @id @default(uuid())
+  name                String
+  slug                String    @unique
+  stripeCustomerId    String?   @unique @map("stripe_customer_id")
+  subscriptionStatus  String    @default("free") @map("subscription_status")
+  // Cloud-only (inert in OSS): ops-set per-org agent-cap override (SQL only,
+  // no UI) — lets a self-serve org exceed its plan's maxAgents without moving
+  // to the sales-managed enterprise plan. Null = plan default.
+  maxAgentsOverride   Int?      @map("max_agents_override")
+  awsExternalId       String?   @map("aws_external_id")
+  /// DEPRECATED (policy engine step 10, 2026-07). Frozen: the default posture
+  /// lives on each scope's Default Rule in `policy_rules_v2`. Never written; the
+  /// only reader is `services/policy-legacy-migration/`, which seeds a converted
+  /// project's Default Rule from it. Goes with that directory and the tables.
+  policyMode          String    @default("allow") @map("policy_mode") // "allow" | "deny"
+  // App-availability posture (step 7): "open" = every app connectable (default,
+  // = today's behavior); "restricted" = allowlist — an app is available to a
+  // project when an AppAvailabilityRule that grants it names one of the project's
+  // ProjectAccess people. Cloud/EE-only (directory-dependent); inert in OSS.
+  appAvailabilityMode String    @default("open") @map("app_availability_mode") // "open" | "restricted"
+  // Cloud-only (inert in OSS): set when this org was created by a Partner.
+  partnerId           String?   @map("partner_id")
+  // Cloud-only (inert in OSS): set when the org detaches from its partner —
+  // stops inheriting partner secrets but keeps partnerId for attribution.
+  partnerDetachedAt   DateTime? @map("partner_detached_at")
+  // Cloud-only (inert in OSS): members of this org's verified domains must
+  // sign in through the org's SSO connection (break-glass via
+  // OrganizationMember.ssoExempt).
+  ssoRequired         Boolean   @default(false) @map("sso_required")
+  // Cloud-only (inert in OSS): first SSO login on a verified domain
+  // auto-joins the org as a member.
+  jitEnabled          Boolean   @default(true) @map("jit_enabled")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  projects             Project[]
+  members              OrganizationMember[]
+  invitations          Invitation[]
+  userProvisions       UserProvision[]
+  secrets              Secret[]
+  appConnections       AppConnection[]
+  appConfigs           AppConfig[]
+  policyRules          PolicyRule[]
+  policyRulesV2        PolicyRuleV2[]
+  apiKeys              ApiKey[]
+  auditLogs            AuditLog[]
+  partner              Partner?                    @relation(fields: [partnerId], references: [id])
+  partnerClaim         PartnerClaim?
+  budgets              Budget[] // cloud-only: per-secret spend budgets for this org (inert in OSS)
+  domains              OrganizationDomain[]
+  ssoConnections       OrganizationSsoConnection[]
+  scimTokens           OrganizationScimToken[]
+  groups               Group[]
+  agentGroups          AgentGroup[]
+  appAvailabilityRules AppAvailabilityRule[]
+  groupRoleMappings    GroupRoleMapping[]
+
+  @@index([partnerId])
+  @@map("organizations")
+}
+
+// Cloud-only: links a User to an Organization with a role.
+model OrganizationMember {
+  organizationId String    @map("organization_id")
+  userId         String    @map("user_id")
+  userEmail      String    @map("user_email")
+  role           String // "owner" | "admin" | "member"
+  // Cloud-only (inert in OSS): "active" | "suspended" — suspended members are
+  // treated as non-members by every authorization check (SCIM deprovisioning).
+  status         String    @default("active")
+  suspendedAt    DateTime? @map("suspended_at")
+  // Cloud-only (inert in OSS): break-glass exemption from the org's
+  // ssoRequired policy (e.g. an owner who keeps a non-SSO sign-in).
+  ssoExempt      Boolean   @default(false) @map("sso_exempt")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@id([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model Invitation {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  email          String
+  role           String // "admin" | "member"
+  token          String   @unique
+  status         String   @default("pending") // "pending" | "accepted" | "cancelled" | "expired"
+  invitedById    String   @map("invited_by_id")
+  invitedByEmail String   @map("invited_by_email")
+  expiresAt      DateTime @map("expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  invitedBy    User         @relation("InvitationCreator", fields: [invitedById], references: [id])
+
+  @@unique([organizationId, email])
+  @@index([token])
+  @@map("invitations")
+}
+
+// Cloud-only (inert in OSS): an email domain claimed by an organization and
+// proven via DNS TXT — the trust root for SSO home-realm discovery, JIT
+// membership, and identity linking. `verifiedAt` null = claimed but pending;
+// every trust decision checks verifiedAt, never mere existence.
+model OrganizationDomain {
+  id                String    @id @default(uuid())
+  organizationId    String    @map("organization_id")
+  domain            String    @unique
+  verificationToken String    @map("verification_token")
+  verifiedAt        DateTime? @map("verified_at")
+  createdByUserId   String?   @map("created_by_user_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  createdByUser User?        @relation("OrganizationDomainCreator", fields: [createdByUserId], references: [id])
+
+  @@index([organizationId])
+  @@map("organization_domains")
+}
+
+// Cloud-only (inert in OSS): a per-organization enterprise SSO connection —
+// the app-side record of an identity provider registered with the auth
+// backend. Secrets (e.g. an OIDC client secret) live in `credentials`
+// (encrypted), never in `config`.
+model OrganizationSsoConnection {
+  id                  String   @id @default(uuid())
+  organizationId      String   @map("organization_id")
+  type                String // "saml" | "oidc"
+  status              String   @default("pending") // "pending" | "active" | "disabled"
+  cognitoProviderName String   @unique @map("cognito_provider_name")
+  displayName         String   @map("display_name")
+  config              Json? // non-secret settings (metadata URL/XML digest, issuer, client id)
+  credentials         String? // encrypted
+  createdByUserId     String?  @map("created_by_user_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  createdByUser User?        @relation("OrganizationSsoConnectionCreator", fields: [createdByUserId], references: [id])
+
+  @@index([organizationId])
+  @@map("organization_sso_connections")
+}
+
+// Cloud-only (inert in OSS): hashed bearer tokens for the org's SCIM
+// provisioning endpoint. Plaintext is shown once at creation and never
+// stored; revocation is soft (row kept for the audit trail).
+model OrganizationScimToken {
+  id              String    @id @default(uuid())
+  organizationId  String    @map("organization_id")
+  tokenHash       String    @unique @map("token_hash") // sha-256
+  label           String
+  lastUsedAt      DateTime? @map("last_used_at")
+  revokedAt       DateTime? @map("revoked_at")
+  createdByUserId String?   @map("created_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  createdByUser User?        @relation("OrganizationScimTokenCreator", fields: [createdByUserId], references: [id])
+
+  @@index([organizationId])
+  @@map("organization_scim_tokens")
+}
+
+model Project {
+  id                 String   @id @default(uuid())
+  name               String?
+  organizationId     String   @map("organization_id")
+  // URL-friendly slug, unique within an organization (e.g. "default", "production").
+  slug               String?
+  createdByUserId    String?  @map("created_by_user_id")
+  createdByUserEmail String?  @map("created_by_user_email")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  createdByUser    User?             @relation("ProjectCreator", fields: [createdByUserId], references: [id])
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  apiKeys          ApiKey[]
+  agents           Agent[]
+  secrets          Secret[]
+  policyRules      PolicyRule[]
+  policyRulesV2    PolicyRuleV2[]
+  auditLogs        AuditLog[]
+  vaultConnections VaultConnection[]
+  onboardingSurvey OnboardingSurvey?
+  appConnections   AppConnection[]
+  appConfigs       AppConfig[]
+  budgets          Budget[] // cloud-only: per-secret spend budgets for this project (inert in OSS)
+  accessBindings   ProjectAccess[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("projects")
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  name                  String?
+  // Cloud-only (inert in OSS): the SCIM `name` object (formatted/givenName/
+  // familyName/…) stored losslessly so IdP-provisioned attributes round-trip;
+  // `name` above stays the display string.
+  nameComponents        Json?     @map("name_components")
+  externalAuthId        String    @unique @map("external_auth_id")
+  countryCode           String?   @map("country_code")
+  country               String?   @map("country")
+  lastLoginAt           DateTime? @map("last_login_at")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  // Cloud-only (inert in OSS): identity-level deactivation timestamp, set
+  // alongside the auth-provider disable when the org owns the identity
+  // (e.g. SCIM deprovisioning).
+  deactivatedAt         DateTime? @map("deactivated_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  organizationMemberships       OrganizationMember[]
+  sentInvitations               Invitation[]                  @relation("InvitationCreator")
+  apiKeys                       ApiKey[]
+  auditLogs                     AuditLog[]
+  createdProjects               Project[]                     @relation("ProjectCreator")
+  onboardingSurveys             OnboardingSurvey[]
+  createdAgentSecrets           AgentSecret[]                 @relation("AgentSecretCreator")
+  updatedAgentSecrets           AgentSecret[]                 @relation("AgentSecretUpdater")
+  provisionedAs                 UserProvision?                @relation("ProvisionedUser")
+  createdProvisions             UserProvision[]               @relation("ProvisionCreator")
+  partnerMemberships            PartnerMember[]
+  partnerPlaceholderClaim       PartnerClaim?                 @relation("PartnerPlaceholder")
+  createdDomains                OrganizationDomain[]          @relation("OrganizationDomainCreator")
+  createdSsoConnections         OrganizationSsoConnection[]   @relation("OrganizationSsoConnectionCreator")
+  createdScimTokens             OrganizationScimToken[]       @relation("OrganizationScimTokenCreator")
+  groupMemberships              GroupMember[]                 @relation("GroupMemberUser")
+  createdGroupMembers           GroupMember[]                 @relation("GroupMemberCreator")
+  createdAgentGroupMembers      AgentGroupMember[]            @relation("AgentGroupMemberCreator")
+  projectAccess                 ProjectAccess[]               @relation("ProjectAccessUser")
+  createdProjectAccess          ProjectAccess[]               @relation("ProjectAccessCreator")
+  createdPolicyRulesV2          PolicyRuleV2[]                @relation("PolicyRuleV2Creator")
+  policyRuleIdentities          PolicyRuleIdentity[]          @relation("PolicyRuleIdentityUser")
+  appAvailabilityRuleIdentities AppAvailabilityRuleIdentity[] @relation("AppAvailabilityRuleIdentityUser")
+  createdAppAvailabilityRules   AppAvailabilityRule[]         @relation("AppAvailabilityRuleCreator")
+
+  @@map("users")
+}
+
+model ApiKey {
+  id             String   @id @default(uuid())
+  scope          String   @default("project") // "project" | "organization"
+  projectId      String?  @map("project_id")
+  organizationId String?  @map("organization_id")
+  userId         String   @map("user_id")
+  userEmail      String   @map("user_email")
+  key            String   @unique // "oc_..." or "oc_org_..." prefix
+  name           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id])
+  project      Project?      @relation(fields: [projectId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([organizationId])
+  @@index([scope])
+  @@map("api_keys")
+}
+
+// ── Workspace data (scoped by projectId) ────────────────────────────────
+
+model Agent {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  name        String
+  identifier  String // user-provided machine-readable ID, unique per project
+  accessToken String   @unique @map("access_token") // "aoc_..." prefix, used for gateway auth
+  isDefault   Boolean  @default(false) @map("is_default")
+  /// LIVE. The all-vs-rules injection switch, read by the gateway on every
+  /// request: "all" injects the whole fenced credential pool, "selective"
+  /// injects only what policy rules grant. Not deprecated — see the plan's
+  /// eliminate-all-mode follow-up, which retires it properly.
+  secretMode  String   @default("all") @map("secret_mode") // "all" or "selective"
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  project     Project  @relation(fields: [projectId], references: [id])
+
+  agentSecrets          AgentSecret[]
+  agentAppConnections   AgentAppConnection[]
+  policyRules           PolicyRule[]
+  agentGroupMemberships AgentGroupMember[]
+  policyRuleIdentities  PolicyRuleIdentity[]
+
+  @@unique([projectId, identifier])
+  @@index([projectId])
+  @@map("agents")
+}
+
+model Secret {
+  id              String        @id @default(uuid())
+  scope           String        @default("project") // "project" | "organization" | "partner"
+  projectId       String?       @map("project_id")
+  organizationId  String?       @map("organization_id")
+  partnerId       String?       @map("partner_id") // cloud-only: set when scope = "partner"
+  name            String
+  type            String // "anthropic", "generic"
+  // Value source: "inline" (encryptedValue) or "onepassword" (resolved from opRef at request time)
+  valueSource     String        @default("inline") @map("value_source")
+  encryptedValue  String?       @map("encrypted_value") // AES-256-GCM via CryptoService; null when valueSource = "onepassword"
+  opRef           String?       @map("op_ref") // 1Password reference op://vault/item/field (valueSource = "onepassword")
+  hostPattern     String        @map("host_pattern") // "api.anthropic.com" or "*.example.com"
+  pathPattern     String?       @map("path_pattern") // "/v1/*", null = all paths
+  injectionConfig Json?         @map("injection_config") // type-specific config (generic: { headerName, valueFormat })
+  metadata        Json? // type-specific metadata (anthropic: { authMode: "api-key" | "oauth" })
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  project         Project?      @relation(fields: [projectId], references: [id])
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  partner         Partner?      @relation(fields: [partnerId], references: [id])
+
+  agentSecrets      AgentSecret[]
+  budgets           Budget[] // cloud-only: spend budgets on this secret (inert in OSS)
+  policyRuleTargets PolicyRuleTarget[]
+
+  @@index([projectId])
+  @@index([organizationId])
+  @@index([partnerId])
+  @@index([scope])
+  @@map("secrets")
+}
+
+/// DEPRECATED (policy engine step 10, 2026-07). The gateway and the console both
+/// run on `policy_rules_v2`. Nothing reads these rows to decide or inject, and
+/// nothing writes a policy here any more — the app blocklist was ported to
+/// `policy_rules_v2` in the same step.
+/// REMAINING COUPLING (the drop checklist — plans/policy-engine.md §10.5):
+///   1. `services/policy-legacy-migration/` READS these rows on every OSS boot
+///      and converts them (the grace-period migration — its README is the
+///      removal checklist). The whole directory goes with the table.
+///   2. `services/policy-migration-guard.ts` counts rows here on boot to report
+///      anything the conversion did not cover. Delete with the table.
+///   3. `ee/services/{project,organization}-service.ts` `deleteMany` here so a
+///      project/org delete isn't blocked by the FK. Delete with the table.
+/// Scheduled for removal in ~2027 (plans/policy-engine.md §10.5).
+model PolicyRule {
+  id              String        @id @default(uuid())
+  scope           String        @default("project") // "project" | "organization" (partner reserved)
+  projectId       String?       @map("project_id")
+  organizationId  String?       @map("organization_id")
+  partnerId       String?       @map("partner_id") // cloud-only, reserved for future partner-level rules (inert)
+  agentId         String?       @map("agent_id") // null = all agents, set = one agent only (project-scoped only)
+  name            String
+  hostPattern     String        @map("host_pattern") // "gmail.googleapis.com" or "*.googleapis.com"
+  pathPattern     String?       @map("path_pattern") // "/gmail/v1/users/me/messages/send" or "/gmail/*"
+  method          String? // "POST", null = all methods
+  action          String // "block" | "rate_limit" | "manual_approval"
+  enabled         Boolean
+  rateLimit       Int?          @map("rate_limit") // max requests per window (only for rate_limit action)
+  rateLimitWindow String?       @map("rate_limit_window") // "minute" | "hour" | "day"
+  metadata        Json?         @map("metadata") // e.g. { source: "app_permission", provider, toolId }
+  conditions      Json?         @map("conditions") // behavioral conditions: [{ target, operator, value, key? }]
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  project         Project?      @relation(fields: [projectId], references: [id])
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  agent           Agent?        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  partner         Partner?      @relation(fields: [partnerId], references: [id])
+
+  @@index([projectId])
+  @@index([organizationId])
+  @@index([partnerId])
+  @@index([scope])
+  @@map("policy_rules")
+}
+
+// ── Unified policy engine (plans/policy-engine.md) ─────────────────────────
+// Priority-ordered, first-match rules — the LIVE policy model since the step-5
+// cutover. The deprecated `policy_rules` above is frozen; the rename to
+// `policy_rules` happens when that table is dropped (§10.5).
+
+model PolicyRuleV2 {
+  id              String   @id @default(uuid())
+  scope           String // "organization" | "project"
+  organizationId  String?  @map("organization_id")
+  projectId       String?  @map("project_id")
+  status          String   @default("draft") // "draft" | "published" (gateway reads published)
+  generation      Int      @default(0) // published snapshot number (rollback)
+  priority        Int // first-match order within a scope (lower = earlier)
+  enabled         Boolean  @default(true)
+  isDefault       Boolean  @default(false) @map("is_default") // terminal Default Rule
+  // A generation-stable identity: a draft's `logicalId` is copied onto each of its
+  // published snapshots, so the gateway's rate-limit counter (keyed on it) survives
+  // republishes — unlike the per-generation row `id`. Distinct rules get distinct
+  // values (defaulted); a snapshot copies its source draft's.
+  logicalId       String   @default(dbgenerated("gen_random_uuid()")) @map("logical_id")
+  // Origin of the rule: "custom" (authored) | "app_permission" | "blocklist"
+  // (materialized from the old model by the step-5 coherence bridge, until the
+  // old editors retire at step 7) | "default" (the terminal posture rule) |
+  // "equipment" (step 8, injection-only, derived from the live equipment
+  // model). The bridge re-materializes only the app_permission/blocklist/
+  // equipment rows, leaving custom + default untouched.
+  source          String   @default("custom")
+  name            String
+  description     String?
+  action          String // "allow" | "block"
+  rateLimit       Int?     @map("rate_limit") // modifier on allow
+  rateLimitWindow String?  @map("rate_limit_window") // "minute" | "hour" | "day"
+  requireApproval Boolean  @default(false) @map("require_approval") // modifier on allow
+  conditions      Json?
+  createdByUserId String?  @map("created_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  organization  Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project       Project?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdByUser User?                @relation("PolicyRuleV2Creator", fields: [createdByUserId], references: [id])
+  identities    PolicyRuleIdentity[]
+  targets       PolicyRuleTarget[]
+
+  @@index([scope, organizationId, projectId, status, priority])
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("policy_rules_v2")
+}
+
+// One identity row per (rule, principal). Empty set on a rule = "any identity".
+// Exactly one of the four principal columns is set (DB CHECK).
+model PolicyRuleIdentity {
+  id           String  @id @default(uuid())
+  ruleId       String  @map("rule_id")
+  agentId      String? @map("agent_id")
+  agentGroupId String? @map("agent_group_id")
+  userId       String? @map("user_id")
+  groupId      String? @map("group_id")
+
+  rule       PolicyRuleV2 @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  agent      Agent?       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentGroup AgentGroup?  @relation(fields: [agentGroupId], references: [id], onDelete: Cascade)
+  user       User?        @relation("PolicyRuleIdentityUser", fields: [userId], references: [id], onDelete: Cascade)
+  group      Group?       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  // A rule binds each principal at most once (mirrors the sibling access tables).
+  @@unique([ruleId, agentId])
+  @@unique([ruleId, agentGroupId])
+  @@unique([ruleId, userId])
+  @@unique([ruleId, groupId])
+  @@index([agentId])
+  @@index([agentGroupId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("policy_rule_identities")
+}
+
+// One target row per (rule, destination). Empty set on a rule = "any
+// destination". `kind` selects which columns are populated (DB CHECK).
+model PolicyRuleTarget {
+  id                 String   @id @default(uuid())
+  ruleId             String   @map("rule_id")
+  kind               String // "app" | "connection" | "secret" | "network"
+  appProvider        String?  @map("app_provider") // kind = app
+  // Narrow which endpoints the rule matches; EMPTY = the WHOLE app (host-only
+  // on the provider's catalog hosts — permit on allow / block on block). On a
+  // kind = connection target the tools narrow the connection's provider app the
+  // same way; injection still injects the whole connection regardless.
+  appTools           String[] @default([]) @map("app_tools")
+  // kind = app (step 8): "organization" | "project" → inject ALL the agent's
+  // connections of `appProvider` at that level. NULL = the app-permission
+  // block/allow rule (no injection). Only set when kind = "app".
+  appConnectionScope String?  @map("app_connection_scope")
+  appConnectionId    String?  @map("app_connection_id") // kind = connection
+  secretId           String?  @map("secret_id") // kind = secret
+  // kind = secret (step 8): "organization" | "project" → inject ALL the agent's
+  // secrets at that level ("all secrets"). Mutually exclusive with `secretId`
+  // (specific secret). Only set when kind = "secret".
+  secretScope        String?  @map("secret_scope")
+  hostPattern        String?  @map("host_pattern") // kind = network
+  pathPattern        String?  @map("path_pattern")
+  method             String?
+
+  rule          PolicyRuleV2   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  appConnection AppConnection? @relation(fields: [appConnectionId], references: [id], onDelete: Cascade)
+  secret        Secret?        @relation(fields: [secretId], references: [id], onDelete: Cascade)
+
+  // A rule references a given connection / secret at most once (app + network
+  // rows are polymorphic — deduped in the app layer, per the plan §2.2).
+  @@unique([ruleId, appConnectionId])
+  @@unique([ruleId, secretId])
+  @@index([ruleId])
+  @@index([appConnectionId])
+  @@index([secretId])
+  @@index([appProvider])
+  @@map("policy_rule_targets")
+}
+
+/// DEPRECATED (policy engine step 10, 2026-07). Per-agent credential grants are
+/// `source="equipment"` rules in `policy_rules_v2` now. These rows are frozen at
+/// whatever the last bridge run left. NOTHING in the serving path reads them —
+/// the gateway's `inject_select`, the console reflections, the simulator and
+/// `routes/container-config.ts` were all re-sourced onto the v2 rules in step 10.
+/// REMAINING COUPLING (the drop checklist — plans/policy-engine.md §10.5):
+///   1. `services/policy-legacy-migration/read-legacy.ts` READS these on every
+///      OSS boot to convert them into equipment rules (the grace-period
+///      migration). The whole directory goes with the table.
+///   2. `ee/services/project-service.ts` `deleteMany`s these on project delete
+///      (FK), and `apps/web/src/ee/account/actions.ts` NULLs
+///      `created_by_user_id` / `updated_by_user_id` on account delete (FK).
+///      Both go with the table.
+///   3. `ee/routes/migrate-import.ts` still ACCEPTS an `agentSecrets` payload arm
+///      from an older self-hosted exporter — it only reports them as skipped and
+///      never writes here, so it is independent of this table's lifetime.
+/// Scheduled for removal in ~2027.
+model AgentSecret {
+  agentId         String   @map("agent_id")
+  secretId        String   @map("secret_id")
+  createdByUserId String?  @map("created_by_user_id")
+  updatedByUserId String?  @map("updated_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  agent           Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  secret          Secret   @relation(fields: [secretId], references: [id], onDelete: Cascade)
+  createdByUser   User?    @relation("AgentSecretCreator", fields: [createdByUserId], references: [id])
+  updatedByUser   User?    @relation("AgentSecretUpdater", fields: [updatedByUserId], references: [id])
+
+  @@id([agentId, secretId])
+  @@map("agent_secrets")
+}
+
+model AuditLog {
+  id             String        @id @default(uuid())
+  projectId      String?       @map("project_id")
+  organizationId String?       @map("organization_id")
+  userId         String        @map("user_id")
+  userEmail      String        @map("user_email")
+  action         String
+  service        String
+  status         String
+  source         String        @default("app")
+  metadata       Json?
+  createdAt      DateTime      @default(now()) @map("created_at")
+  project        Project?      @relation(fields: [projectId], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
+
+  @@index([projectId, createdAt])
+  @@index([organizationId, createdAt])
+  @@map("audit_logs")
+}
+
+model RequestLog {
+  id                   String   @id @default(uuid())
+  projectId            String   @map("project_id")
+  agentId              String   @map("agent_id")
+  method               String
+  host                 String
+  path                 String
+  provider             String
+  status               Int
+  latencyMs            Int      @map("latency_ms")
+  injectionCount       Int      @map("injection_count")
+  extraData            Json?    @map("extra_data")
+  // The generation-stable logicalId of the v2 policy rule that decided the
+  // request (step 9 visibility) — null for legacy decisions, plain allows,
+  // pre-v2 rows, and OSS (its writer never binds it). The display NAME rides
+  // extra_data.matched_rule_name (survives rule deletion).
+  matchedRuleLogicalId String?  @map("matched_rule_logical_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  @@index([projectId, createdAt])
+  @@map("request_logs")
+}
+
+model VaultConnection {
+  id              String    @id @default(uuid())
+  projectId       String    @map("project_id")
+  provider        String
+  name            String?
+  status          String
+  connectionData  Json?     @map("connection_data")
+  lastConnectedAt DateTime? @map("last_connected_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  project         Project   @relation(fields: [projectId], references: [id])
+
+  @@unique([projectId, provider])
+  @@map("vault_connections")
+}
+
+model OnboardingSurvey {
+  id         String   @id @default(uuid())
+  projectId  String   @unique @map("project_id")
+  userId     String   @map("user_id")
+  userEmail  String   @map("user_email")
+  useCase    String?  @map("use_case")
+  discovery  String[] @default([])
+  responses  Json     @default("{}")
+  setupState Json?    @map("setup_state")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  project    Project  @relation(fields: [projectId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@map("onboarding_surveys")
+}
+
+// ── App connections ──────────────────────────────────────────────────────
+
+model AppConnection {
+  id                  String               @id @default(uuid())
+  scope               String               @default("project") // "project" | "organization" (partner reserved)
+  projectId           String?              @map("project_id")
+  organizationId      String?              @map("organization_id")
+  partnerId           String?              @map("partner_id") // cloud-only, reserved for future partner-level app connections (inert)
+  // The AppConfig whose credentials minted this connection (OAuth refresh
+  // tokens are bound to that client). Null = platform/env credentials, a
+  // connection method that needs no config, or minted before this link.
+  appConfigId         String?              @map("app_config_id")
+  provider            String // "github", "gmail", "google-calendar", "google-drive", etc.
+  label               String?              @map("label") // auto-populated from metadata (email/username)
+  status              String               @default("connected")
+  credentials         String?              @map("credentials") // encrypted JSON (access_token, refresh_token, etc.)
+  scopes              String[]             @default([])
+  metadata            Json? // non-secret info (username, org, email)
+  connectedAt         DateTime             @default(now()) @map("connected_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  project             Project?             @relation(fields: [projectId], references: [id])
+  organization        Organization?        @relation(fields: [organizationId], references: [id])
+  partner             Partner?             @relation(fields: [partnerId], references: [id])
+  appConfig           AppConfig?           @relation(fields: [appConfigId], references: [id], onDelete: SetNull)
+  agentAppConnections AgentAppConnection[]
+  policyRuleTargets   PolicyRuleTarget[]
+
+  @@index([projectId, provider])
+  @@index([organizationId, provider])
+  @@index([partnerId])
+  @@index([scope])
+  @@index([appConfigId])
+  @@map("app_connections")
+}
+
+/// DEPRECATED (policy engine step 10, 2026-07). Per-agent connection grants are
+/// `source="equipment"` rules in `policy_rules_v2` now, and their
+/// `session_policy` resource scoping rides those rules' `conditions` (the bridge
+/// carried it verbatim; `ee/policy_engine/inject_select.rs` reads it from there).
+/// These rows are frozen and nothing in the serving path reads them — same
+/// re-sourcing as `AgentSecret` above.
+/// REMAINING COUPLING: `services/policy-legacy-migration/read-legacy.ts` reads
+/// them on OSS boot to convert them, and `ee/services/project-service.ts`
+/// `deleteMany`s them on project delete (FK). Both go with the table.
+/// Scheduled for removal in ~2027 (plans/policy-engine.md §10.5).
+model AgentAppConnection {
+  agentId         String        @map("agent_id")
+  appConnectionId String        @map("app_connection_id")
+  sessionPolicy   Json?         @map("session_policy")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  agent           Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  appConnection   AppConnection @relation(fields: [appConnectionId], references: [id], onDelete: Cascade)
+
+  @@id([agentId, appConnectionId])
+  @@map("agent_app_connections")
+}
+
+model AppConfig {
+  id             String          @id @default(uuid())
+  scope          String          @default("project") // "project" | "organization" (partner reserved)
+  projectId      String?         @map("project_id")
+  organizationId String?         @map("organization_id")
+  partnerId      String?         @map("partner_id") // cloud-only, reserved for future partner-level app config (inert)
+  provider       String // "github", "gmail", "google-calendar", "google-drive"
+  enabled        Boolean         @default(false)
+  credentials    String?         @map("credentials") // encrypted (clientSecret)
+  settings       Json? // plain (clientId, scopes)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  project        Project?        @relation(fields: [projectId], references: [id])
+  organization   Organization?   @relation(fields: [organizationId], references: [id])
+  partner        Partner?        @relation(fields: [partnerId], references: [id])
+  // Connections minted with this config's credentials (see AppConnection.appConfigId).
+  connections    AppConnection[]
+
+  @@unique([projectId, provider])
+  @@unique([organizationId, provider])
+  @@index([partnerId])
+  @@index([scope])
+  @@map("app_configs")
+}
+
+// ── Groups, project access & role mappings ───────────────────────────────
+// Human principals (user | group) and machine principals (agent | agentGroup)
+// for the enterprise directory. Groups gate project access (ProjectAccess) and
+// drive org roles (GroupRoleMapping); agent groups organize workloads.
+
+// A human group — manually managed, or provisioned from the customer IdP via
+// SCIM (source "scim" rows are locked to IdP management).
+model Group {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  name           String
+  source         String   @default("manual") // "manual" | "scim"
+  externalId     String?  @map("external_id") // IdP correlation id (SCIM)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  members                       GroupMember[]
+  projectAccess                 ProjectAccess[]
+  roleMapping                   GroupRoleMapping?
+  policyRuleIdentities          PolicyRuleIdentity[]
+  appAvailabilityRuleIdentities AppAvailabilityRuleIdentity[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, source, externalId])
+  @@index([organizationId])
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId         String   @map("group_id")
+  userId          String   @map("user_id")
+  createdByUserId String?  @map("created_by_user_id") // null = SCIM/system write
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  group         Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user          User  @relation("GroupMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("GroupMemberCreator", fields: [createdByUserId], references: [id])
+
+  @@id([groupId, userId])
+  @@index([userId])
+  @@map("group_members")
+}
+
+// A group of agents — AgentVault-native and org-scoped (the workload-grouping
+// layer; SCIM never touches these).
+model AgentGroup {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  name           String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  members              AgentGroupMember[]
+  policyRuleIdentities PolicyRuleIdentity[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("agent_groups")
+}
+
+model AgentGroupMember {
+  agentGroupId    String   @map("agent_group_id")
+  agentId         String   @map("agent_id")
+  createdByUserId String?  @map("created_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  agentGroup    AgentGroup @relation(fields: [agentGroupId], references: [id], onDelete: Cascade)
+  agent         Agent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdByUser User?      @relation("AgentGroupMemberCreator", fields: [createdByUserId], references: [id])
+
+  @@id([agentGroupId, agentId])
+  @@index([agentId])
+  @@map("agent_group_members")
+}
+
+// Project access bindings — the project's human gate (GRANT semantics: a row
+// grants access; agents live in projects, so no machine columns here).
+// Exactly one of userId/groupId per row (DB CHECK).
+model ProjectAccess {
+  id              String   @id @default(uuid())
+  projectId       String   @map("project_id")
+  userId          String?  @map("user_id")
+  groupId         String?  @map("group_id")
+  // Management role on a USER binding (step 13c): "owner" may rename/share/delete
+  // the project; "member" is a plain use grant. Group bindings stay role-less in
+  // v1 (member). Only consulted for management — usage (13b) is role-blind.
+  role            String   @default("member") // "owner" | "member"
+  createdByUserId String?  @map("created_by_user_id") // null = system write (creator seed)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user          User?   @relation("ProjectAccessUser", fields: [userId], references: [id], onDelete: Cascade)
+  group         Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdByUser User?   @relation("ProjectAccessCreator", fields: [createdByUserId], references: [id])
+
+  @@unique([projectId, userId])
+  @@unique([projectId, groupId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("project_access")
+}
+
+// Org-scoped app-availability rules (step 7): a named rule grants a SET of apps
+// to a SET of human principals (users | groups), applied when the org's
+// appAvailabilityMode is "restricted". Mirrors the PolicyRuleV2 +
+// PolicyRuleIdentity shape but is a SEPARATE axis (the provisioning gate, not
+// agent runtime policy). Cloud/EE-only; inert in OSS.
+model AppAvailabilityRule {
+  id              String   @id @default(uuid())
+  organizationId  String   @map("organization_id")
+  name            String? // optional label, e.g. "People-management apps"
+  providers       String[] @default([]) // granted apps = AppDefinition.ids (empty = no-op)
+  createdByUserId String?  @map("created_by_user_id") // null = system write
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  organization  Organization                  @relation(fields: [organizationId], references: [id])
+  createdByUser User?                         @relation("AppAvailabilityRuleCreator", fields: [createdByUserId], references: [id])
+  identities    AppAvailabilityRuleIdentity[]
+
+  @@index([organizationId])
+  @@map("app_availability_rules")
+}
+
+// One identity row per (rule, principal). Exactly one of userId/groupId is set
+// (DB CHECK). Mirrors PolicyRuleIdentity.
+model AppAvailabilityRuleIdentity {
+  id      String  @id @default(uuid())
+  ruleId  String  @map("rule_id")
+  userId  String? @map("user_id")
+  groupId String? @map("group_id")
+
+  rule  AppAvailabilityRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  user  User?               @relation("AppAvailabilityRuleIdentityUser", fields: [userId], references: [id], onDelete: Cascade)
+  group Group?              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  // A rule binds each principal at most once.
+  @@unique([ruleId, userId])
+  @@unique([ruleId, groupId])
+  @@index([ruleId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("app_availability_rule_identities")
+}
+
+// Group → org-role mapping (priority-ordered; the highest-priority mapping
+// among a user's groups wins; unmatched users keep their current role).
+model GroupRoleMapping {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  groupId        String   @unique @map("group_id")
+  role           String // "admin" | "member"
+  priority       Int
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  group        Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("group_role_mappings")
+}
+
+// ── Provisioned users ───────────────────────────────────────────────────
+
+model UserProvision {
+  id                 String    @id @default(uuid())
+  organizationId     String    @map("organization_id")
+  userId             String    @unique @map("user_id")
+  projectId          String    @unique @map("project_id")
+  role               String // "admin" | "member"
+  token              String    @unique
+  status             String    @default("pending") // "pending" | "claimed" | "expired"
+  skipOnboarding     Boolean   @default(true) @map("skip_onboarding")
+  provisionedById    String    @map("provisioned_by_id")
+  provisionedByEmail String    @map("provisioned_by_email")
+  expiresAt          DateTime  @map("expires_at")
+  claimedAt          DateTime? @map("claimed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  user          User         @relation("ProvisionedUser", fields: [userId], references: [id])
+  provisionedBy User         @relation("ProvisionCreator", fields: [provisionedById], references: [id])
+
+  @@index([token])
+  @@index([organizationId])
+  @@index([expiresAt, status])
+  @@map("user_provisions")
+}
+
+// ── Partner (cloud-only) ────────────────────────────────────────────────
+// A Partner is a reseller/agency that sits ABOVE Organization. It creates orgs
+// via the Partner API, provides inherited (lowest-priority) partner secrets, and
+// hands out claim links. Cloud-only behaviour; these tables/columns are inert in
+// OSS (no OSS code reads or writes them), mirroring CliAuthSession/UserProvision.
+
+model Partner {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  apiKey    String   @unique @map("api_key") // "oc_partner_" + 32 hex
+  status    String   @default("active") // "active" | "suspended"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members        PartnerMember[]
+  organizations  Organization[]
+  secrets        Secret[]
+  appConnections AppConnection[]
+  appConfigs     AppConfig[]
+  policyRules    PolicyRule[]
+  partnerClaims  PartnerClaim[]
+
+  @@map("partners")
+}
+
+// Links a Cognito user (User row) to a Partner for partner-portal access.
+// Mirrors OrganizationMember; supports multiple staff per partner.
+model PartnerMember {
+  partnerId String   @map("partner_id")
+  userId    String   @map("user_id")
+  userEmail String   @map("user_email")
+  role      String   @default("owner") // "owner" | "admin" | "member" (partner-staff role)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  partner Partner @relation(fields: [partnerId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@id([partnerId, userId])
+  // A user belongs to at most one partner (the portal / API-key resolution is
+  // single-partner). Unique — not just an index — enforces that at the DB level.
+  @@unique([userId])
+  @@map("partner_members")
+}
+
+// Claim record for a partner-pre-created (unclaimed) organization. Mirrors
+// UserProvision: a placeholder OWNER holds the org+project until a real Cognito
+// user claims it via the token and is promoted to OWNER.
+model PartnerClaim {
+  id                String    @id @default(uuid())
+  partnerId         String    @map("partner_id")
+  organizationId    String    @unique @map("organization_id")
+  projectId         String    @map("project_id")
+  placeholderUserId String?   @unique @map("placeholder_user_id")
+  token             String    @unique
+  status            String    @default("pending") // "pending" | "claimed" | "expired"
+  expiresAt         DateTime? @map("expires_at") // null = never expires (partner orgs are long-lived)
+  claimedAt         DateTime? @map("claimed_at")
+  claimedByUserId   String?   @map("claimed_by_user_id")
+  claimedByEmail    String?   @map("claimed_by_email")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  partner      Partner      @relation(fields: [partnerId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  placeholder  User?        @relation("PartnerPlaceholder", fields: [placeholderUserId], references: [id], onDelete: SetNull)
+
+  @@index([token])
+  @@index([partnerId])
+  @@index([status])
+  @@map("partner_claims")
+}
+
+// Cloud-only (inert in OSS): a spend budget on a secret for a consuming scope.
+// Scope-agnostic — partner-ness is implied by the bound secret's scope, so the
+// same model serves a future non-partner flow (org/project capping its own key).
+// Now: secretId = a partner secret, organizationId = the consuming org.
+model Budget {
+  id             String   @id @default(uuid())
+  secretId       String   @map("secret_id")
+  organizationId String?  @map("organization_id")
+  projectId      String?  @map("project_id") // future non-partner scoping
+  limitCents     Int      @map("limit_cents")
+  period         String   @default("monthly") // "monthly" | "total"
+  createdBy      String   @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  secret       Secret        @relation(fields: [secretId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  project      Project?      @relation(fields: [projectId], references: [id])
+
+  @@unique([secretId, organizationId]) // one budget per (secret, consuming org)
+  @@index([secretId])
+  @@index([organizationId])
+  @@map("budgets")
+}
+
+// Cloud-only (inert in OSS): durable accumulated spend, period-windowed to match
+// the gateway's Redis hot counter key. The Redis counter is the hot enforcement
+// source of truth; this is the durable floor (rehydrated into Redis on cache miss
+// so a flush can't silently refill a budget). `spentNanos` = nano-dollars (1e-9).
+model BudgetSpend {
+  secretId       String   @map("secret_id")
+  organizationId String   @map("organization_id")
+  period         String // "m:YYYY-MM" (monthly window) | "total"
+  spentNanos     BigInt   @default(0) @map("spent_nanos")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@id([secretId, organizationId, period])
+  @@map("budget_spends")
+}
+
+// ── Standalone (no project scoping) ─────────────────────────────────────
+
+model ResendBadEmail {
+  id        String   @id @default(uuid())
+  email     String
+  eventType String   @map("event_type") // "email.bounced" or "email.complained"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@map("resend_bad_emails")
+}
+
+model ResendWebhook {
+  id           String   @id @default(uuid())
+  eventType    String   @map("event_type") // "email.sent", "email.bounced", "email.complained", etc.
+  emailSubject String?  @map("email_subject")
+  emailFrom    String?  @map("email_from")
+  emailTo      String?  @map("email_to")
+  eventData    Json?    @map("event_data")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("resend_webhooks")
+}
+
+model CliAuthSession {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  status    String   @default("pending") // "pending" | "confirmed" | "expired"
+  apiKey    String?  @map("api_key")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("cli_auth_sessions")
+}

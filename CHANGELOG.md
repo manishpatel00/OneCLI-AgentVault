@@ -1,0 +1,780 @@
+# Changelog
+
+## [1.43.0](https://github.com/agentvault/agentvault/compare/v1.42.0...v1.43.0) (2026-07-25)
+
+
+### Features
+
+* drop the legacy policy model, convert to v2 rules on boot ([#448](https://github.com/agentvault/agentvault/issues/448)) ([345ac58](https://github.com/agentvault/agentvault/commit/345ac585fdcd7dc4b05b36236022cbb4d4367b91))
+
+
+### Bug Fixes
+
+* **api:** resolve the OAuth callback's app origin from configured APP_URL ([#421](https://github.com/agentvault/agentvault/issues/421)) ([8d11172](https://github.com/agentvault/agentvault/commit/8d111722c0cab2a019c4727d6fd42fdb90946806))
+
+## [1.42.0](https://github.com/agentvault/agentvault/compare/v1.41.0...v1.42.0) (2026-07-23)
+
+
+### Features
+
+* unified first-match policy engine with automatic migration ([#436](https://github.com/agentvault/agentvault/issues/436)) ([21b015b](https://github.com/agentvault/agentvault/commit/21b015b6621346d8d43ea0b96c571bc2f24e8b10))
+
+
+### Bug Fixes
+
+* **policy:** close credential-injection host-enforcement bypass ([#438](https://github.com/agentvault/agentvault/issues/438)) ([1633c21](https://github.com/agentvault/agentvault/commit/1633c21e20874f7d9add80f2d566c7c5424070d4))
+
+## [1.41.0](https://github.com/agentvault/agentvault/compare/v1.40.0...v1.41.0) (2026-07-07)
+
+
+### Features
+
+* API-first connections/rules/vaults + per-connection agent access ([#412](https://github.com/agentvault/agentvault/issues/412)) ([71f13ee](https://github.com/agentvault/agentvault/commit/71f13eef11ee10cd280c020f21d34a738985c840))
+* edition variants, connect-only web surface, shared-org bootstrap ([#407](https://github.com/agentvault/agentvault/issues/407)) ([405077c](https://github.com/agentvault/agentvault/commit/405077c34334fff36f259aa182917d5244e6b60f))
+* org app-config provider, identity-conflict hook, org-routes seam, connection provenance ([#415](https://github.com/agentvault/agentvault/issues/415)) ([3c8dc9e](https://github.com/agentvault/agentvault/commit/3c8dc9e8e2d6f50caa138590523961fe901c0622))
+
+
+### Bug Fixes
+
+* **auth:** serve NextAuth at /api/auth so self-hosted OAuth login works ([#362](https://github.com/agentvault/agentvault/issues/362)) ([#406](https://github.com/agentvault/agentvault/issues/406)) ([b708697](https://github.com/agentvault/agentvault/commit/b7086974879548b2e51525dc0d9e68128f40ccc1))
+
+## [1.40.0](https://github.com/agentvault/agentvault/compare/v1.39.0...v1.40.0) (2026-06-30)
+
+
+### Features
+
+* add URL path injection for path-embedded credentials ([#356](https://github.com/agentvault/agentvault/issues/356)) ([fa6d816](https://github.com/agentvault/agentvault/commit/fa6d816851da0b8b54772aa24a345c452bdde5bc))
+* introduce edition→capability layer ([#402](https://github.com/agentvault/agentvault/issues/402)) ([663da68](https://github.com/agentvault/agentvault/commit/663da68e3d8000b6acb17a22f7c2a677fafd055e))
+* support alternate connection methods and expand the app catalog ([#398](https://github.com/agentvault/agentvault/issues/398)) ([e816c76](https://github.com/agentvault/agentvault/commit/e816c76fb4b269f3decf00a00735c1970b8280db))
+
+
+### Bug Fixes
+
+* **api-key:** provision per-user keys on read; re-check access on use ([#400](https://github.com/agentvault/agentvault/issues/400)) ([c7d2432](https://github.com/agentvault/agentvault/commit/c7d243233c9f2a26ce30d0ab70ed341e4ab13039))
+
+## [1.39.0](https://github.com/agentvault/agentvault/compare/v1.38.0...v1.39.0) (2026-06-28)
+
+
+### Features
+
+* add "Hide AI" activity filter and tolerate missing API keys ([#397](https://github.com/agentvault/agentvault/issues/397)) ([cf387ae](https://github.com/agentvault/agentvault/commit/cf387ae8cac197f4878b6045aced2a58e6b4d1ec))
+* **gateway:** agent-framework-aware gateway skill ([#385](https://github.com/agentvault/agentvault/issues/385)) ([fb1f357](https://github.com/agentvault/agentvault/commit/fb1f3571b37af8228f7ee6936b2e51295a253fc4))
+* **gateway:** pluggable per-app approval summaries ([#392](https://github.com/agentvault/agentvault/issues/392)) ([dd782e8](https://github.com/agentvault/agentvault/commit/dd782e8b1d8b20d8c355ba4b556c72f5a6fe4028))
+* live approval notifications, gateway summaries, and fixes ([#393](https://github.com/agentvault/agentvault/issues/393)) ([2bdc293](https://github.com/agentvault/agentvault/commit/2bdc29308f0cc276202df2e5ed36a82a8bebdcb0))
+* **web:** show build version on Overview and Settings ([#389](https://github.com/agentvault/agentvault/issues/389)) ([8d52c20](https://github.com/agentvault/agentvault/commit/8d52c20b57e1c54826387572fa87174e1ab0ef53))
+
+## [1.38.0](https://github.com/agentvault/agentvault/compare/v1.37.0...v1.38.0) (2026-06-18)
+
+
+### Features
+
+* add Google Contacts (People API) provider ([#355](https://github.com/agentvault/agentvault/issues/355)) ([fec4f4d](https://github.com/agentvault/agentvault/commit/fec4f4de1eebfe4a868ff460f6b4da15d6e4bc46))
+
+## [1.37.0](https://github.com/agentvault/agentvault/compare/v1.36.0...v1.37.0) (2026-06-16)
+
+
+### Features
+
+* per-agent granular access for app connections ([#366](https://github.com/agentvault/agentvault/issues/366)) ([622cb26](https://github.com/agentvault/agentvault/commit/622cb267c61e4769ed7bfd70499ad45bf816ea63))
+* sync shared changes from cloud ([#368](https://github.com/agentvault/agentvault/issues/368)) ([a05782b](https://github.com/agentvault/agentvault/commit/a05782b83c47b3025593a7c09459d37e0a36dc03))
+* **vault:** 1Password as a secret value source ([#113](https://github.com/agentvault/agentvault/issues/113)) ([ccdfe8d](https://github.com/agentvault/agentvault/commit/ccdfe8daf09203c169afc2f50d5b7d754c6a8dde))
+
+## [1.36.0](https://github.com/agentvault/agentvault/compare/v1.35.1...v1.36.0) (2026-06-10)
+
+
+### Features
+
+* **gateway:** answer Codex agentvault-managed token refresh with a synthetic 200 ([#363](https://github.com/agentvault/agentvault/issues/363)) ([53a2890](https://github.com/agentvault/agentvault/commit/53a289072dfe7fb4940e79a19d4ff815289be6ba))
+
+## [1.35.1](https://github.com/agentvault/agentvault/compare/v1.35.0...v1.35.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* allow digit-leading agent identifiers and flag unknown agents ([#346](https://github.com/agentvault/agentvault/issues/346)) ([e553d90](https://github.com/agentvault/agentvault/commit/e553d90ae99ddb0aa276074400cf8fe76c39a3c9))
+* restore default project fallback for self-hosted auth ([#348](https://github.com/agentvault/agentvault/issues/348)) ([6b5cadf](https://github.com/agentvault/agentvault/commit/6b5cadf0e7607ceaed5e6d5e7220a2a0bd975e13))
+* show run command in Get Started dialog ([#350](https://github.com/agentvault/agentvault/issues/350)) ([8efdf12](https://github.com/agentvault/agentvault/commit/8efdf12cbe0c1faa9c7407e6927ddfafaf765021))
+
+## [1.35.0](https://github.com/agentvault/agentvault/compare/v1.34.1...v1.35.0) (2026-06-03)
+
+
+### Features
+
+* add JFrog Artifactory integration with blocklist system ([#342](https://github.com/agentvault/agentvault/issues/342)) ([3f1d4ba](https://github.com/agentvault/agentvault/commit/3f1d4ba7e2a8c5b10ca64b0cf55d432184744f38))
+
+## [1.34.1](https://github.com/agentvault/agentvault/compare/v1.34.0...v1.34.1) (2026-06-02)
+
+
+### Bug Fixes
+
+* use non-temp path for CODEX_HOME in container config ([#340](https://github.com/agentvault/agentvault/issues/340)) ([92b630e](https://github.com/agentvault/agentvault/commit/92b630e66f7c09fe1d14a1c45c9fa1886402390b))
+
+## [1.34.0](https://github.com/agentvault/agentvault/compare/v1.33.0...v1.34.0) (2026-06-02)
+
+
+### Features
+
+* add GitLab integration with OAuth and gateway support ([#286](https://github.com/agentvault/agentvault/issues/286)) ([ce585fd](https://github.com/agentvault/agentvault/commit/ce585fd04ebe935a2ad3ce3dbcbb53683ec3d69d))
+* add Google Chat / Spaces integration ([#314](https://github.com/agentvault/agentvault/issues/314)) ([2b36f05](https://github.com/agentvault/agentvault/commit/2b36f051b431f38cdf979a42ecb0ceeab19a3582))
+* unify codex into openai secret type, add app categories and credential stubs ([#339](https://github.com/agentvault/agentvault/issues/339)) ([26f7c5e](https://github.com/agentvault/agentvault/commit/26f7c5e9bd6a5e780173d26791bf46950827cdc9))
+
+## [1.33.0](https://github.com/agentvault/agentvault/compare/v1.32.3...v1.33.0) (2026-05-31)
+
+
+### Features
+
+* add Codex (OpenAI OAuth) secret type with auto-refresh ([#332](https://github.com/agentvault/agentvault/issues/332)) ([9e8a0c7](https://github.com/agentvault/agentvault/commit/9e8a0c7ac367b9080d3f1b108f1bd3eab62ea554))
+
+## [1.32.3](https://github.com/agentvault/agentvault/compare/v1.32.2...v1.32.3) (2026-05-31)
+
+
+### Bug Fixes
+
+* migrate export sends data to cloud instead of itself ([#330](https://github.com/agentvault/agentvault/issues/330)) ([604bc65](https://github.com/agentvault/agentvault/commit/604bc65a9167bf740457cd43ae035e233ac887a1))
+
+## [1.32.2](https://github.com/agentvault/agentvault/compare/v1.32.1...v1.32.2) (2026-05-31)
+
+
+### Bug Fixes
+
+* sync shared changes from cloud repo ([#328](https://github.com/agentvault/agentvault/issues/328)) ([c9932a4](https://github.com/agentvault/agentvault/commit/c9932a4457a9c5bf872b4472e9ad5d40908aaad0))
+
+## [1.32.1](https://github.com/agentvault/agentvault/compare/v1.32.0...v1.32.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* return GATEWAY_API_URL from /v1/gateway-url endpoint ([#326](https://github.com/agentvault/agentvault/issues/326)) ([93df414](https://github.com/agentvault/agentvault/commit/93df4143d2ba4f5a126ab1a95987600b2b2814e6))
+
+## [1.32.0](https://github.com/agentvault/agentvault/compare/v1.31.1...v1.32.0) (2026-05-28)
+
+
+### Features
+
+* sync shared changes from cloud repo ([#323](https://github.com/agentvault/agentvault/issues/323)) ([55629b1](https://github.com/agentvault/agentvault/commit/55629b1cb2de7db16e7ad922c195ad1eb6cb3935))
+
+
+### Bug Fixes
+
+* derive OAuth redirect URI from request host to resolve localhost vs 127.0.0.1 mismatch ([#325](https://github.com/agentvault/agentvault/issues/325)) ([ccf5b2b](https://github.com/agentvault/agentvault/commit/ccf5b2bf4b8f5e19d85ef2f6ade4a942525836de))
+
+## [1.31.1](https://github.com/agentvault/agentvault/compare/v1.31.0...v1.31.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* use spreadsheets scope to allow editing existing Google Sheets ([#319](https://github.com/agentvault/agentvault/issues/319)) ([fa91b50](https://github.com/agentvault/agentvault/commit/fa91b50d985cb59d05c1fa8019682438f9ada844))
+
+## [1.31.0](https://github.com/agentvault/agentvault/compare/v1.30.0...v1.31.0) (2026-05-26)
+
+
+### Features
+
+* org policy mode, scoped gateway URLs, and connect param fix ([#318](https://github.com/agentvault/agentvault/issues/318)) ([a3f8e51](https://github.com/agentvault/agentvault/commit/a3f8e5105eae665b9a0140295a02becd96537d92))
+
+
+### Bug Fixes
+
+* settings nav org-awareness and proxy cookie validation ([#316](https://github.com/agentvault/agentvault/issues/316)) ([ed1e9a9](https://github.com/agentvault/agentvault/commit/ed1e9a9ac0bf520b2cecac602ee480f288eef642))
+
+## [1.30.0](https://github.com/agentvault/agentvault/compare/v1.29.2...v1.30.0) (2026-05-24)
+
+
+### Features
+
+* inherit parent agent permissions when creating sub-agents ([#312](https://github.com/agentvault/agentvault/issues/312)) ([a243837](https://github.com/agentvault/agentvault/commit/a2438377436ff78935d69f8b26a9e13bc24aa6fd)), closes [#297](https://github.com/agentvault/agentvault/issues/297)
+
+## [1.29.2](https://github.com/agentvault/agentvault/compare/v1.29.1...v1.29.2) (2026-05-24)
+
+
+### Bug Fixes
+
+* runtime env vars, credential response, and secret dialog improvements ([#310](https://github.com/agentvault/agentvault/issues/310)) ([624be33](https://github.com/agentvault/agentvault/commit/624be33c91ecd6b215a654ba1849dac6e2f13bda))
+
+## [1.29.1](https://github.com/agentvault/agentvault/compare/v1.29.0...v1.29.1) (2026-05-23)
+
+
+### Bug Fixes
+
+* show redirect URI in OAuth credentials dialog ([#305](https://github.com/agentvault/agentvault/issues/305)) ([a7e4cd1](https://github.com/agentvault/agentvault/commit/a7e4cd1524674b8a258ef58279305cd35f460c73))
+
+## [1.29.0](https://github.com/agentvault/agentvault/compare/v1.28.1...v1.29.0) (2026-05-23)
+
+
+### Features
+
+* add Monday.com integration and Sentry cloud-only stub ([#303](https://github.com/agentvault/agentvault/issues/303)) ([a67f521](https://github.com/agentvault/agentvault/commit/a67f52157f3fe954a9edbdbcd1599becd4869174))
+
+## [1.28.1](https://github.com/agentvault/agentvault/compare/v1.28.0...v1.28.1) (2026-05-19)
+
+
+### Bug Fixes
+
+* show cloud upsell instead of infinite spinner in get-started dialog for OSS ([#293](https://github.com/agentvault/agentvault/issues/293)) ([6119fc4](https://github.com/agentvault/agentvault/commit/6119fc411cc40268c204c48d2b412ae14d3a7824))
+
+## [1.28.0](https://github.com/agentvault/agentvault/compare/v1.27.0...v1.28.0) (2026-05-19)
+
+
+### Features
+
+* v1 API prefix migration ([#291](https://github.com/agentvault/agentvault/issues/291)) ([e560f38](https://github.com/agentvault/agentvault/commit/e560f380a6651910c9f77394fead1d64674e7d11))
+
+## [1.27.0](https://github.com/agentvault/agentvault/compare/v1.26.0...v1.27.0) (2026-05-18)
+
+
+### Features
+
+* generic body transform pattern and gateway restructure ([#284](https://github.com/agentvault/agentvault/issues/284)) ([53c060a](https://github.com/agentvault/agentvault/commit/53c060a7afd8aaf50c39c899e99f8b8fe83e1b9b))
+
+## [1.26.0](https://github.com/agentvault/agentvault/compare/v1.25.0...v1.26.0) (2026-05-18)
+
+
+### Features
+
+* switchable default agent, required identifier, and new app integrations ([#281](https://github.com/agentvault/agentvault/issues/281)) ([8dc667c](https://github.com/agentvault/agentvault/commit/8dc667ca4d18c4981c4557af675b8790f06e6495))
+
+
+### Bug Fixes
+
+* pro dialog ([#283](https://github.com/agentvault/agentvault/issues/283)) ([3bbee0c](https://github.com/agentvault/agentvault/commit/3bbee0cd706697660eb34f357b62a6dff066105c))
+
+## [1.25.0](https://github.com/agentvault/agentvault/compare/v1.24.0...v1.25.0) (2026-05-16)
+
+
+### Features
+
+* add behavioral conditions to policy rules and org/project permission overlap ([#279](https://github.com/agentvault/agentvault/issues/279)) ([f3854a0](https://github.com/agentvault/agentvault/commit/f3854a035ac41fddaa6068c769888a63ea1fd241))
+
+## [1.24.0](https://github.com/agentvault/agentvault/compare/v1.23.0...v1.24.0) (2026-05-14)
+
+
+### Features
+
+* add app permission definitions for AWS, Cloudflare, Datadog, and Notion ([#270](https://github.com/agentvault/agentvault/issues/270)) ([b6bd222](https://github.com/agentvault/agentvault/commit/b6bd2222fc831d51a55ad264940036cbbba33a84))
+* add MongoDB Atlas Administration API integration ([#261](https://github.com/agentvault/agentvault/issues/261)) ([3cbbc02](https://github.com/agentvault/agentvault/commit/3cbbc02199e5a92f976d0d36d0aa30c7eeda5586))
+* add MongoDB Atlas, GitHub App integrations, org API keys, and OAuth refactoring ([#267](https://github.com/agentvault/agentvault/issues/267)) ([22b1611](https://github.com/agentvault/agentvault/commit/22b1611e9527ce105a903f9860562deeb0ad3dd6))
+
+## [1.23.0](https://github.com/agentvault/agentvault/compare/v1.22.0...v1.23.0) (2026-05-11)
+
+
+### Features
+
+* add activity page, app permissions, AWS integration, and request telemetry ([#264](https://github.com/agentvault/agentvault/issues/264)) ([85ffc35](https://github.com/agentvault/agentvault/commit/85ffc35d1970cadc89f65a67e9fda8d6351b989a))
+* add Cloudflare integration with Bearer auth on api.cloudflare.com ([#265](https://github.com/agentvault/agentvault/issues/265)) ([cbc7be3](https://github.com/agentvault/agentvault/commit/cbc7be3e59c7d9995bd2af6a49e9740b16fd3df6))
+
+
+### Bug Fixes
+
+* **gateway:** forward absolute-form https:// proxy requests over TLS ([#259](https://github.com/agentvault/agentvault/issues/259)) ([353b727](https://github.com/agentvault/agentvault/commit/353b7273fd26908ec16613f71069c26057f89392))
+
+## [1.22.0](https://github.com/agentvault/agentvault/compare/v1.21.1...v1.22.0) (2026-05-08)
+
+
+### Features
+
+* add Notion as OAuth integration ([#257](https://github.com/agentvault/agentvault/issues/257)) ([c2e80e1](https://github.com/agentvault/agentvault/commit/c2e80e1002dbb1f9f8e3e1c7a8a6928a5198aabe))
+
+## [1.21.1](https://github.com/agentvault/agentvault/compare/v1.21.0...v1.21.1) (2026-05-07)
+
+
+### Bug Fixes
+
+* include hostname in injection cache key ([#251](https://github.com/agentvault/agentvault/issues/251)) ([#252](https://github.com/agentvault/agentvault/issues/252)) ([fa6468e](https://github.com/agentvault/agentvault/commit/fa6468e4711bc283f26b11e68c0ce8dc6a799010))
+* serve gateway skill definition from unified API endpoint ([#255](https://github.com/agentvault/agentvault/issues/255)) ([800ece8](https://github.com/agentvault/agentvault/commit/800ece89b53283b735067e65c68f233a361cac6b))
+
+## [1.21.0](https://github.com/agentvault/agentvault/compare/v1.20.0...v1.21.0) (2026-05-05)
+
+
+### Features
+
+* add cloud-only apps framework, credential header injection, and user provisioning schema ([#247](https://github.com/agentvault/agentvault/issues/247)) ([16dfe1a](https://github.com/agentvault/agentvault/commit/16dfe1a1dba49ce8070fbdd979719021b03517bf))
+* generic OAuth interface, pro app badges, and credential resolution ([#249](https://github.com/agentvault/agentvault/issues/249)) ([ed2474f](https://github.com/agentvault/agentvault/commit/ed2474fcc6951c8cc552b7f2f4558629f5992b42))
+
+
+### Bug Fixes
+
+* center dashboard content and unify page widths ([#250](https://github.com/agentvault/agentvault/issues/250)) ([31b78d1](https://github.com/agentvault/agentvault/commit/31b78d160db78908c512d22f45ccfb4737b9075e))
+
+## [1.20.0](https://github.com/agentvault/agentvault/compare/v1.19.1...v1.20.0) (2026-05-05)
+
+
+### Features
+
+* add OpenAI secret type, WebSocket proxy, and SecretInput component ([#244](https://github.com/agentvault/agentvault/issues/244)) ([a740187](https://github.com/agentvault/agentvault/commit/a7401879ee88dcdc7cf3e20ead505d2471febd11))
+* add Todoist app integration ([#242](https://github.com/agentvault/agentvault/issues/242)) ([8accd63](https://github.com/agentvault/agentvault/commit/8accd63b7a65bb8a2816536eeec3fdc079a5663b))
+* make app and gateway ports configurable for multi-user hosts ([#227](https://github.com/agentvault/agentvault/issues/227)) ([ea4118e](https://github.com/agentvault/agentvault/commit/ea4118e5e3b0349681f2ca07c97b905e8f0d965e))
+* support ONECLI_VERSION env var in install script ([#246](https://github.com/agentvault/agentvault/issues/246)) ([197d2f9](https://github.com/agentvault/agentvault/commit/197d2f95d6b485b47cd2d12536cea0484098fb80))
+
+
+### Bug Fixes
+
+* GitHub config to clarify OAuth App credentials ([#245](https://github.com/agentvault/agentvault/issues/245)) ([6ba8ae3](https://github.com/agentvault/agentvault/commit/6ba8ae394f7af0f4e4cb4be0acdfc0d5cd5ce084))
+* split Secrets tab into Custom/LLMs, swap logo to PNG, fix settings redirect ([#241](https://github.com/agentvault/agentvault/issues/241)) ([b73c8a3](https://github.com/agentvault/agentvault/commit/b73c8a32ef720d2e5853fdc620e1c8f122080d25))
+
+## [1.19.1](https://github.com/agentvault/agentvault/compare/v1.19.0...v1.19.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* inject OAuth bearer on Google batch endpoints ([#237](https://github.com/agentvault/agentvault/issues/237)) ([5fa436d](https://github.com/agentvault/agentvault/commit/5fa436da21e31951f0ba48fa3038b86701d4f23b))
+* resolve mobile layout issues and update session handling ([#230](https://github.com/agentvault/agentvault/issues/230)) ([bca6873](https://github.com/agentvault/agentvault/commit/bca68733e914a6a7da19a3e31cf03e8392627143))
+
+## [1.19.0](https://github.com/agentvault/agentvault/compare/v1.18.6...v1.19.0) (2026-04-30)
+
+
+### Features
+
+* add Jira and Confluence app integrations with Atlassian OAuth ([#222](https://github.com/agentvault/agentvault/issues/222)) ([0b7cd8e](https://github.com/agentvault/agentvault/commit/0b7cd8e812763ab6f5bd4487408e6f858871a657))
+* add secret injection in query parameters ([#194](https://github.com/agentvault/agentvault/issues/194)) ([0956ec6](https://github.com/agentvault/agentvault/commit/0956ec62f34b593f5ad432027e0c1f2ed7869e72))
+* add Vertex AI integration with ADC import and token endpoint interception ([#224](https://github.com/agentvault/agentvault/issues/224)) ([3832ac6](https://github.com/agentvault/agentvault/commit/3832ac6c8ce3862ec1e63a438324bbfdb0c35f7d))
+* add YouTube app integration for playlist management ([#221](https://github.com/agentvault/agentvault/issues/221)) ([5c43421](https://github.com/agentvault/agentvault/commit/5c43421c4d38a351502e4afd927feda4a73b8bed))
+
+
+### Bug Fixes
+
+* detect postgres port conflict in installer ([#214](https://github.com/agentvault/agentvault/issues/214)) ([6c6017c](https://github.com/agentvault/agentvault/commit/6c6017ce323e5b080f263ce82f89a3f74eb60763))
+* harden secret param injection — security, UX, and correctness ([#218](https://github.com/agentvault/agentvault/issues/218)) ([aa5941b](https://github.com/agentvault/agentvault/commit/aa5941b6da93972017f5b10a483fad2758952f7d))
+* secret dialog examples and overflow ([#217](https://github.com/agentvault/agentvault/issues/217)) ([e3ce339](https://github.com/agentvault/agentvault/commit/e3ce339431989b21aa68ef069f2e453f5956ec0b))
+
+## [1.18.6](https://github.com/agentvault/agentvault/compare/v1.18.5...v1.18.6) (2026-04-27)
+
+
+### Bug Fixes
+
+* add version to health endpoint and dashboard user menu ([#211](https://github.com/agentvault/agentvault/issues/211)) ([126ed12](https://github.com/agentvault/agentvault/commit/126ed12a92e3784bb5623e1f31f05ad53e804d05))
+
+## [1.18.5](https://github.com/agentvault/agentvault/compare/v1.18.4...v1.18.5) (2026-04-27)
+
+
+### Bug Fixes
+
+* roll back loopback session auth ([#201](https://github.com/agentvault/agentvault/issues/201)) and installer bind-host change ([#206](https://github.com/agentvault/agentvault/issues/206)) ([#209](https://github.com/agentvault/agentvault/issues/209)) ([e854fe5](https://github.com/agentvault/agentvault/commit/e854fe52416cf6a07fddef66525a25b4b8aa4335))
+
+## [1.18.4](https://github.com/agentvault/agentvault/compare/v1.18.3...v1.18.4) (2026-04-27)
+
+
+### Bug Fixes
+
+* bind installer API to loopback so fresh bare-metal installs can auth ([#206](https://github.com/agentvault/agentvault/issues/206)) ([6bde3d4](https://github.com/agentvault/agentvault/commit/6bde3d40b5ad8eae0fb0a4a67ef8e3a8a2a2735f))
+
+## [1.18.3](https://github.com/agentvault/agentvault/compare/v1.18.2...v1.18.3) (2026-04-26)
+
+
+### Bug Fixes
+
+* improve gateway telemetry, app connections, and dashboard header ([#204](https://github.com/agentvault/agentvault/issues/204)) ([7a374eb](https://github.com/agentvault/agentvault/commit/7a374eb7f036518c132a504b9f4b593bc6e4fcb0))
+* restrict local mode session auth to loopback requests ([#201](https://github.com/agentvault/agentvault/issues/201)) ([81d4352](https://github.com/agentvault/agentvault/commit/81d4352e23b7414a03b2a5eb8821aee499d01d48))
+
+## [1.18.2](https://github.com/agentvault/agentvault/compare/v1.18.1...v1.18.2) (2026-04-22)
+
+
+### Bug Fixes
+
+* mobile layout fixes, Slack channel support, and deploy UX improvements ([#199](https://github.com/agentvault/agentvault/issues/199)) ([8054787](https://github.com/agentvault/agentvault/commit/80547874745ec3803dd30176aba27f07ffd2747f))
+
+## [1.18.1](https://github.com/agentvault/agentvault/compare/v1.18.0...v1.18.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* sync shared changes - deploy pages, migration export, schema updates ([#196](https://github.com/agentvault/agentvault/issues/196)) ([1747791](https://github.com/agentvault/agentvault/commit/1747791016bc2bf8f8445682ab51e2d72eee1abb))
+
+## [1.18.0](https://github.com/agentvault/agentvault/compare/v1.17.0...v1.18.0) (2026-04-16)
+
+
+### Features
+
+* add "Request an app" card to apps grid ([#189](https://github.com/agentvault/agentvault/issues/189)) ([0137ea4](https://github.com/agentvault/agentvault/commit/0137ea4e57960852e5c5ac044bd8fa7eb0af53df))
+
+## [1.17.0](https://github.com/agentvault/agentvault/compare/v1.16.0...v1.17.0) (2026-04-16)
+
+
+### Features
+
+* multi-account connections, credential_not_found and access_restricted responses ([#187](https://github.com/agentvault/agentvault/issues/187)) ([8624335](https://github.com/agentvault/agentvault/commit/86243351641332f04fd12f00484bc40a95b66a56))
+
+## [1.16.0](https://github.com/agentvault/agentvault/compare/v1.15.1...v1.16.0) (2026-04-14)
+
+
+### Features
+
+* broaden access_restricted to cover secrets and app connections, add ResolvedRules struct, improve gateway cache auth ([#185](https://github.com/agentvault/agentvault/issues/185)) ([b6492a4](https://github.com/agentvault/agentvault/commit/b6492a4b91c5653d4eeb0a98991406e7fdee0f3e))
+* credential_not_found for unknown hosts, MITM all authenticated traffic, auth-related 400 handling ([#186](https://github.com/agentvault/agentvault/issues/186)) ([8cd44ce](https://github.com/agentvault/agentvault/commit/8cd44ce6bc31c136b7d21b6ba26279fe295db8cf))
+
+
+### Bug Fixes
+
+* resolve injection and policy rules per request instead of freezing at CONNECT time ([#178](https://github.com/agentvault/agentvault/issues/178)) ([19d159f](https://github.com/agentvault/agentvault/commit/19d159f5f324ebaf1d4aaa103389fead74af96cc))
+
+## [1.15.1](https://github.com/agentvault/agentvault/compare/v1.15.0...v1.15.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* approval refinements — agent identifier, body streaming, guard cleanup ([#175](https://github.com/agentvault/agentvault/issues/175)) ([a468bb6](https://github.com/agentvault/agentvault/commit/a468bb6ccea82061aaf7e4d37b97a6bf8480b7b6))
+
+## [1.15.0](https://github.com/agentvault/agentvault/compare/v1.14.2...v1.15.0) (2026-04-09)
+
+
+### Features
+
+* add manual approval policy action for gateway requests ([#172](https://github.com/agentvault/agentvault/issues/172)) ([632ccab](https://github.com/agentvault/agentvault/commit/632ccab84c79eadec43cf4b16597e6afc8663510))
+
+
+### Bug Fixes
+
+* remove NEXTAUTH_SECRET fallback that forced OAuth mode ([#173](https://github.com/agentvault/agentvault/issues/173)) ([b602f1b](https://github.com/agentvault/agentvault/commit/b602f1b887143f03e0d6650d1170d97fcbdc4f4b))
+
+## [1.14.2](https://github.com/agentvault/agentvault/compare/v1.14.1...v1.14.2) (2026-04-08)
+
+
+### Bug Fixes
+
+* refactor gateway, add unconnected app response, centralize env vars ([#170](https://github.com/agentvault/agentvault/issues/170)) ([2290c50](https://github.com/agentvault/agentvault/commit/2290c500a3756abca3bc7d3f0805a88aca7ced8b))
+
+## [1.14.1](https://github.com/agentvault/agentvault/compare/v1.14.0...v1.14.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* add env defaults check and loading skeletons for connect URL param ([#168](https://github.com/agentvault/agentvault/issues/168)) ([9e84f3e](https://github.com/agentvault/agentvault/commit/9e84f3e5fdea843871e922ac0ec86f0f903a61e0))
+
+## [1.14.0](https://github.com/agentvault/agentvault/compare/v1.13.0...v1.14.0) (2026-04-06)
+
+
+### Features
+
+* add loading skeletons, fix content flash, and URL-driven connect ([#166](https://github.com/agentvault/agentvault/issues/166)) ([dc7e607](https://github.com/agentvault/agentvault/commit/dc7e6076a711670a57ad492b36a37c36a976e15c))
+
+
+### Bug Fixes
+
+* add GET /api/apps/[provider] route with setup hint ([#167](https://github.com/agentvault/agentvault/issues/167)) ([28db4c3](https://github.com/agentvault/agentvault/commit/28db4c3851dc382d4a301edc805e2a622972c284))
+* add loading skeletons and prefetch tab routes for instant navigation ([#164](https://github.com/agentvault/agentvault/issues/164)) ([aa00bce](https://github.com/agentvault/agentvault/commit/aa00bce51d22d8fff2e7adc6a4f089fd0e39e0c4))
+
+## [1.13.0](https://github.com/agentvault/agentvault/compare/v1.12.1...v1.13.0) (2026-04-06)
+
+
+### Features
+
+* add /api/apps REST routes for CLI app connections ([#160](https://github.com/agentvault/agentvault/issues/160)) ([8e68d35](https://github.com/agentvault/agentvault/commit/8e68d35d70fb72291590d1c83bbf438cbc4ffedb))
+
+
+### Bug Fixes
+
+* autofill secret name from Anthropic key type ([#156](https://github.com/agentvault/agentvault/issues/156)) ([8c4e2a3](https://github.com/agentvault/agentvault/commit/8c4e2a32bb8dda1f9b71df8c66e787b13b22da19))
+
+## [1.12.1](https://github.com/agentvault/agentvault/compare/v1.12.0...v1.12.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* configurable bind host for Docker port bindings ([#153](https://github.com/agentvault/agentvault/issues/153)) ([97a36d1](https://github.com/agentvault/agentvault/commit/97a36d174054403df6322fc009a849cd4538c593))
+* encrypt Bitwarden vault session state at rest in connection_data ([#146](https://github.com/agentvault/agentvault/issues/146)) ([e6de1e6](https://github.com/agentvault/agentvault/commit/e6de1e6a654c08cba8995c68986b81af5860849c))
+* pre-fill secret name with "Anthropic Token" for anthropic type ([#157](https://github.com/agentvault/agentvault/issues/157)) ([86444e0](https://github.com/agentvault/agentvault/commit/86444e006e74eb0a94d42229518d2c2285ebeae4))
+
+## [1.12.0](https://github.com/agentvault/agentvault/compare/v1.11.0...v1.12.0) (2026-04-03)
+
+
+### Features
+
+* add HTTP proxy support alongside HTTPS ([#150](https://github.com/agentvault/agentvault/issues/150)) ([ec24fba](https://github.com/agentvault/agentvault/commit/ec24fbade5527671480c0b0c4541c90736f278fa))
+
+
+### Bug Fixes
+
+* add missing error handling in OAuth token exchange and credential decryption ([#148](https://github.com/agentvault/agentvault/issues/148)) ([d9e70c6](https://github.com/agentvault/agentvault/commit/d9e70c69bba6b42d086e27b00f2de28da91235d5))
+* **gateway:** add GATEWAY_SKIP_VERIFY_HOSTS for selective TLS skip ([#145](https://github.com/agentvault/agentvault/issues/145)) ([962d948](https://github.com/agentvault/agentvault/commit/962d948b54cc061d50a956f18b5c810c2c221f24))
+
+## [1.11.0](https://github.com/agentvault/agentvault/compare/v1.10.0...v1.11.0) (2026-04-02)
+
+
+### Features
+
+* add 11 Google Workspace apps and inline BYOC config dialog ([#140](https://github.com/agentvault/agentvault/issues/140)) ([82c717a](https://github.com/agentvault/agentvault/commit/82c717ad7f9d13511e43c2d9cde3f85382929eb8))
+
+
+### Bug Fixes
+
+* update README quick start to lead with install script ([#143](https://github.com/agentvault/agentvault/issues/143)) ([6deed12](https://github.com/agentvault/agentvault/commit/6deed120bf827a20c3df0022cae5a80d955b0c43))
+
+## [1.10.0](https://github.com/agentvault/agentvault/compare/v1.9.0...v1.10.0) (2026-03-31)
+
+
+### Features
+
+* add Google Drive app integration with path-prefix routing ([#136](https://github.com/agentvault/agentvault/issues/136)) ([4745147](https://github.com/agentvault/agentvault/commit/4745147f7fd7ceb86035ac712675a22ba9ed742b))
+* unified credential access dialog and always-visible connect button ([#138](https://github.com/agentvault/agentvault/issues/138)) ([0b20830](https://github.com/agentvault/agentvault/commit/0b2083068ea6910786ac91f4d91afb5b10665ce4))
+
+## [1.9.0](https://github.com/agentvault/agentvault/compare/v1.8.0...v1.9.0) (2026-03-31)
+
+
+### Features
+
+* add Gmail app with OAuth token refresh and BYOC support ([#130](https://github.com/agentvault/agentvault/issues/130)) ([41c2a83](https://github.com/agentvault/agentvault/commit/41c2a833a09b14fb2073f93e9fb8fdc2ca83bf2b))
+* add Google Calendar app integration and rename google to gmail ([#135](https://github.com/agentvault/agentvault/issues/135)) ([64e080c](https://github.com/agentvault/agentvault/commit/64e080c46c16796d354ed667c62f49cf5e420431))
+* add Resend integration and API key connection type ([#133](https://github.com/agentvault/agentvault/issues/133)) ([86010ef](https://github.com/agentvault/agentvault/commit/86010ef5ca262f982b4011b209d037fd59971275))
+
+## [1.8.0](https://github.com/agentvault/agentvault/compare/v1.7.2...v1.8.0) (2026-03-29)
+
+
+### Features
+
+* add google_oauth secret type with form-body injection ([#123](https://github.com/agentvault/agentvault/issues/123)) ([b99798b](https://github.com/agentvault/agentvault/commit/b99798b2f3ef1c7299135dead715a5b2d10dbb64))
+* app connections with OAuth flow and gateway credential injection ([#127](https://github.com/agentvault/agentvault/issues/127)) ([aa8ec62](https://github.com/agentvault/agentvault/commit/aa8ec62ac4c11e1805ba77c7c60620769cf1d995))
+
+
+### Bug Fixes
+
+* handle app-configure postMessage and suppress body hydration warning ([#128](https://github.com/agentvault/agentvault/issues/128)) ([6c22837](https://github.com/agentvault/agentvault/commit/6c228371b6f5f42fc1b3f3875a8ebfd2a345378c))
+
+## [1.7.2](https://github.com/agentvault/agentvault/compare/v1.7.1...v1.7.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* add API key auth to gateway and server-side cache invalidation ([#118](https://github.com/agentvault/agentvault/issues/118)) ([70fdfa8](https://github.com/agentvault/agentvault/commit/70fdfa84c1650ed52f869b996fc73b2b9e808acb))
+
+## [1.7.1](https://github.com/agentvault/agentvault/compare/v1.7.0...v1.7.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* enable automatic container restart on failure or system reboot ([#112](https://github.com/agentvault/agentvault/issues/112)) ([c933ad9](https://github.com/agentvault/agentvault/commit/c933ad91efa1b65e92df7a1d34fefbcc7b01d4eb))
+* invalidate gateway cache on secret and rule mutations ([#117](https://github.com/agentvault/agentvault/issues/117)) ([9966c98](https://github.com/agentvault/agentvault/commit/9966c981beb2035a7587b48bb9ebb36e72ccdf61)), closes [#116](https://github.com/agentvault/agentvault/issues/116)
+* postgres18 data mount ([#111](https://github.com/agentvault/agentvault/issues/111)) ([dee1206](https://github.com/agentvault/agentvault/commit/dee120660e2616f2b45fe28c79af8be71d3644ac))
+
+## [1.7.0](https://github.com/agentvault/agentvault/compare/v1.6.0...v1.7.0) (2026-03-25)
+
+
+### Features
+
+* add audit logging for sensitive operations ([#103](https://github.com/agentvault/agentvault/issues/103)) ([4429e1f](https://github.com/agentvault/agentvault/commit/4429e1fcedfc90b849ddcc8121ce249a31b8f368))
+
+
+### Bug Fixes
+
+* don't follow redirects server-side in MITM proxy ([#108](https://github.com/agentvault/agentvault/issues/108)) ([bdab279](https://github.com/agentvault/agentvault/commit/bdab279d71843af61318b22d64941b97e9f3dde2))
+* rewrite denormalize migration to handle non-empty tables ([#106](https://github.com/agentvault/agentvault/issues/106)) ([a6e75b7](https://github.com/agentvault/agentvault/commit/a6e75b7816a58eb8d06e42ab24ab4135a46c2811))
+
+## [1.6.0](https://github.com/agentvault/agentvault/compare/v1.5.5...v1.6.0) (2026-03-25)
+
+
+### Features
+
+* add account layer for multi-tenant workspace scoping ([#98](https://github.com/agentvault/agentvault/issues/98)) ([4057a3f](https://github.com/agentvault/agentvault/commit/4057a3f899baa544004fbeba7ff485e1ed421877))
+
+
+### Bug Fixes
+
+* missing Authority Key Identifier in MITM leaf certificates ([#100](https://github.com/agentvault/agentvault/issues/100)) ([3d26e8d](https://github.com/agentvault/agentvault/commit/3d26e8db76314bbeb6206a42f1a879d23dc32db2))
+* preserve Content-Length header in MITM responses ([#102](https://github.com/agentvault/agentvault/issues/102)) ([21ee091](https://github.com/agentvault/agentvault/commit/21ee09165f36e62d8e5d152bf822c7852cf77a46))
+
+## [1.5.5](https://github.com/agentvault/agentvault/compare/v1.5.4...v1.5.5) (2026-03-24)
+
+
+### Bug Fixes
+
+* prisma migration ([#94](https://github.com/agentvault/agentvault/issues/94)) ([ea56564](https://github.com/agentvault/agentvault/commit/ea5656416eb2a47b68fa6c158f6d083c43c4ce92))
+
+## [1.5.4](https://github.com/agentvault/agentvault/compare/v1.5.3...v1.5.4) (2026-03-23)
+
+
+### Bug Fixes
+
+* auto-create default agent on first container-config call ([#92](https://github.com/agentvault/agentvault/issues/92)) ([e690665](https://github.com/agentvault/agentvault/commit/e690665d2c54912d2db92a3fa90eb3af2edfdd69))
+
+## [1.5.3](https://github.com/agentvault/agentvault/compare/v1.5.2...v1.5.3) (2026-03-23)
+
+
+### Bug Fixes
+
+* update gateway SQL queries to use pluralized table names ([#90](https://github.com/agentvault/agentvault/issues/90)) ([191ac57](https://github.com/agentvault/agentvault/commit/191ac57400bd0f8c417420ef6208684dfa8fe380))
+
+## [1.5.2](https://github.com/agentvault/agentvault/compare/v1.5.1...v1.5.2) (2026-03-23)
+
+
+### Bug Fixes
+
+* auth login flow, schema migrations, and UI updates ([#88](https://github.com/agentvault/agentvault/issues/88)) ([a05fedd](https://github.com/agentvault/agentvault/commit/a05feddc8b40e66eb00344e0896d787e42d89130))
+
+## [1.5.1](https://github.com/agentvault/agentvault/compare/v1.5.0...v1.5.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* redesign rule dialog with two-step flow and brand colors ([#85](https://github.com/agentvault/agentvault/issues/85)) ([296d878](https://github.com/agentvault/agentvault/commit/296d878b11d1f055e1e2971d9ef256c856390a5a))
+* restructure settings with sub-navigation and reorder main nav ([#87](https://github.com/agentvault/agentvault/issues/87)) ([a1e6f3a](https://github.com/agentvault/agentvault/commit/a1e6f3af0b01b756a9fd097deeeeab08f486a21b))
+
+## [1.5.0](https://github.com/agentvault/agentvault/compare/v1.4.2...v1.5.0) (2026-03-22)
+
+
+### Features
+
+* add rate limit policy rules ([#84](https://github.com/agentvault/agentvault/issues/84)) ([f2109c2](https://github.com/agentvault/agentvault/commit/f2109c21ec4b6ffa629d81ae9cc16ae74d1e25e4))
+
+
+### Bug Fixes
+
+* add loading states to sign-in, sign-out, and demo dialog ([#82](https://github.com/agentvault/agentvault/issues/82)) ([2fc30b4](https://github.com/agentvault/agentvault/commit/2fc30b402700285828b353eaf82209241337016a))
+
+## [1.4.2](https://github.com/agentvault/agentvault/compare/v1.4.1...v1.4.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* rename indexes and foreign keys to snake_case ([#81](https://github.com/agentvault/agentvault/issues/81)) ([bc9705c](https://github.com/agentvault/agentvault/commit/bc9705c1d362537d124ab99d7d45cc88db4f9f7c))
+* route all server output through pino JSON in production ([#79](https://github.com/agentvault/agentvault/issues/79)) ([1d91ad1](https://github.com/agentvault/agentvault/commit/1d91ad110c4009a3c5a85a7a918e727079521ea7))
+
+## [1.4.1](https://github.com/agentvault/agentvault/compare/v1.4.0...v1.4.1) (2026-03-20)
+
+
+### Bug Fixes
+
+* install OpenSSL dev headers in Docker build for ap-* crates ([#74](https://github.com/agentvault/agentvault/issues/74)) ([ebaf1e1](https://github.com/agentvault/agentvault/commit/ebaf1e17a2750f19dc12f04326ae08f5d580a6c6))
+
+## [1.4.0](https://github.com/agentvault/agentvault/compare/v1.3.0...v1.4.0) (2026-03-20)
+
+
+### Features
+
+* Bitwarden vault support ([#60](https://github.com/agentvault/agentvault/issues/60)) ([8bdc9e2](https://github.com/agentvault/agentvault/commit/8bdc9e2095383d6f32c22bb5c55b55220ce86d9f))
+
+
+### Bug Fixes
+
+* add /api/auth/session endpoint for reliable user provisioning ([#71](https://github.com/agentvault/agentvault/issues/71)) ([0b8591e](https://github.com/agentvault/agentvault/commit/0b8591ed519576fa9d720951f0ece609213b1a72))
+
+## [1.3.0](https://github.com/agentvault/agentvault/compare/v1.2.1...v1.3.0) (2026-03-19)
+
+
+### Features
+
+* add policy rules for gateway access control ([#66](https://github.com/agentvault/agentvault/issues/66)) ([2bfe568](https://github.com/agentvault/agentvault/commit/2bfe568886bd5334ec1811845024482cca552fbe))
+
+
+### Bug Fixes
+
+* use 127.0.0.1 in health check and reduce image size ([#68](https://github.com/agentvault/agentvault/issues/68)) ([aa0ca78](https://github.com/agentvault/agentvault/commit/aa0ca78748badd59351dbdbc443f7fe0d8c38e02))
+
+## [1.2.1](https://github.com/agentvault/agentvault/compare/v1.2.0...v1.2.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* add start_period and increase retries for postgres health check ([#63](https://github.com/agentvault/agentvault/issues/63)) ([789d285](https://github.com/agentvault/agentvault/commit/789d285e032dfe1b0dc69666613feee4133a6722))
+* increase health check start_period for migrations ([#65](https://github.com/agentvault/agentvault/issues/65)) ([077fe84](https://github.com/agentvault/agentvault/commit/077fe84c84be14ab601a5d219103de3eb90bb05d))
+
+## [1.2.0](https://github.com/agentvault/agentvault/compare/v1.1.6...v1.2.0) (2026-03-18)
+
+
+### Features
+
+* add per-agent secret permissions with selective mode ([#56](https://github.com/agentvault/agentvault/issues/56)) ([7d47647](https://github.com/agentvault/agentvault/commit/7d47647a832b1ee933e7c62b5e90b7dd207996db))
+* default new agents to selective mode with anthropic secret ([#58](https://github.com/agentvault/agentvault/issues/58)) ([f7dbe7d](https://github.com/agentvault/agentvault/commit/f7dbe7de6cae7ab27d2a1de00c6708b07000f17e))
+
+
+### Bug Fixes
+
+* detect Anthropic auth mode from secret metadata for correct container env vars ([#61](https://github.com/agentvault/agentvault/issues/61)) ([2e42480](https://github.com/agentvault/agentvault/commit/2e42480597fd54c43f6214f69ade08f8317dac08))
+* scope container-config anthropic secret lookup to agent's secret mode ([#62](https://github.com/agentvault/agentvault/issues/62)) ([1a794b7](https://github.com/agentvault/agentvault/commit/1a794b707a21f48b0efa6a7d5c2a3fcb9c406a39))
+
+## [1.1.6](https://github.com/agentvault/agentvault/compare/v1.1.5...v1.1.6) (2026-03-16)
+
+
+### Bug Fixes
+
+* add gateway auth extractor, CORS, and user_id threading ([#52](https://github.com/agentvault/agentvault/issues/52)) ([98d071e](https://github.com/agentvault/agentvault/commit/98d071e8a98996e790e8f2c9f558c3ada10418bd))
+
+## [1.1.5](https://github.com/agentvault/agentvault/compare/v1.1.4...v1.1.5) (2026-03-16)
+
+
+### Bug Fixes
+
+* add explicit bridge network to Docker Compose for reliable DNS resolution ([#49](https://github.com/agentvault/agentvault/issues/49)) ([369a0b5](https://github.com/agentvault/agentvault/commit/369a0b5e7eca9d7c7899d6a86a068705b944e03e))
+* migrate gateway to Axum with direct DB access ([#46](https://github.com/agentvault/agentvault/issues/46)) ([d76445f](https://github.com/agentvault/agentvault/commit/d76445f5f7961afe1639c85abcc9fb29373e6475))
+* remove unused gateway connect API route and shared secret ([#48](https://github.com/agentvault/agentvault/issues/48)) ([ed5e9a3](https://github.com/agentvault/agentvault/commit/ed5e9a3ebb0373a92dd845b5504f83915f63fbee))
+
+## [1.1.4](https://github.com/agentvault/agentvault/compare/v1.1.3...v1.1.4) (2026-03-15)
+
+
+### Bug Fixes
+
+* seed default agent, demo secret, and API key on first dashboard load ([#44](https://github.com/agentvault/agentvault/issues/44)) ([0fca413](https://github.com/agentvault/agentvault/commit/0fca413ccf4d921e41ceb0fde13799c7b4f32be3))
+
+## [1.1.3](https://github.com/agentvault/agentvault/compare/v1.1.2...v1.1.3) (2026-03-15)
+
+
+### Bug Fixes
+
+* add Discord link to README ([#39](https://github.com/agentvault/agentvault/issues/39)) ([4bb22ce](https://github.com/agentvault/agentvault/commit/4bb22ce420cf8b1fccf61a7b96d53715da394e12))
+* enforce server-side session validation in all server actions ([#42](https://github.com/agentvault/agentvault/issues/42)) ([1232b51](https://github.com/agentvault/agentvault/commit/1232b51790090adb0abce7942759ac149d39d42d))
+* replace embedded PGlite with PostgreSQL ([#43](https://github.com/agentvault/agentvault/issues/43)) ([db44f62](https://github.com/agentvault/agentvault/commit/db44f6215c0836625d568f93917ae36cf0cdf773))
+
+## [1.1.2](https://github.com/agentvault/agentvault/compare/v1.1.1...v1.1.2) (2026-03-12)
+
+
+### Bug Fixes
+
+* correct encryption key generation command for zsh compatibility ([#34](https://github.com/agentvault/agentvault/issues/34)) ([f5ade32](https://github.com/agentvault/agentvault/commit/f5ade321fd9f357fb6a9aac4b5a99f83fd57b1af))
+* update README with how-it-works section and copy cleanup ([#35](https://github.com/agentvault/agentvault/issues/35)) ([e43ca55](https://github.com/agentvault/agentvault/commit/e43ca55f7153bf69231dacf8507137b4e6194e2b))
+
+## [1.1.1](https://github.com/agentvault/agentvault/compare/v1.1.0...v1.1.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* add mise config, page header, and profile page ([#31](https://github.com/agentvault/agentvault/issues/31)) ([b984043](https://github.com/agentvault/agentvault/commit/b98404346c82927a7268e46b2dfe7f1be86386e0))
+
+## [1.1.0](https://github.com/agentvault/agentvault/compare/v1.0.3...v1.1.0) (2026-03-12)
+
+
+### Features
+
+* add 'Try it' demo button in dashboard header ([#23](https://github.com/agentvault/agentvault/issues/23)) ([221cb6c](https://github.com/agentvault/agentvault/commit/221cb6c25f4dfc9e8852f4cf450d87e0d2a7ae19))
+
+
+### Bug Fixes
+
+* crop excess whitespace from logo animations ([#27](https://github.com/agentvault/agentvault/issues/27)) ([3d1d39a](https://github.com/agentvault/agentvault/commit/3d1d39a7c6aa7f9ddb868220f83204afcc977c74))
+
+## [1.0.3](https://github.com/agentvault/agentvault/compare/v1.0.2...v1.0.3) (2026-03-12)
+
+
+### Bug Fixes
+
+* add setup error page with proxy-based config validation ([#21](https://github.com/agentvault/agentvault/issues/21)) ([4557579](https://github.com/agentvault/agentvault/commit/4557579032e650c11950d5c01aa74e4487dc15e4))
+
+## [1.0.2](https://github.com/agentvault/agentvault/compare/v1.0.1...v1.0.2) (2026-03-11)
+
+
+### Bug Fixes
+
+* improve Docker publish performance with native ARM builds and cargo-chef ([#19](https://github.com/agentvault/agentvault/issues/19)) ([c7b02c2](https://github.com/agentvault/agentvault/commit/c7b02c24d6c3141c2ccd761c506d54a0f666353c))
+
+## [1.0.1](https://github.com/agentvault/agentvault/compare/v1.0.0...v1.0.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* add anthropic place holders ([#17](https://github.com/agentvault/agentvault/issues/17)) ([a359a26](https://github.com/agentvault/agentvault/commit/a359a26914932251cd44d0c9b8da7edea8a791bb))
+
+## 1.0.0 (2026-03-11)
+
+
+### Features
+
+* add user API key, Docker setup, rename cognitoId ([#7](https://github.com/agentvault/agentvault/issues/7)) ([ebff179](https://github.com/agentvault/agentvault/commit/ebff179b5a680afbd5bdbf033510999ccd63a6be))
+* remove unnecessary imp ([#8](https://github.com/agentvault/agentvault/issues/8)) ([17153bc](https://github.com/agentvault/agentvault/commit/17153bc9055192bb61c298d5a3bd3bc66defa8ba))
+* runtime auth mode detection and auto-generated secrets ([#11](https://github.com/agentvault/agentvault/issues/11)) ([5c85631](https://github.com/agentvault/agentvault/commit/5c856317b23961ab65833dca973d162716c350e4))
+* unify auth around agent tokens, add secrets ([#5](https://github.com/agentvault/agentvault/issues/5)) ([76ba39f](https://github.com/agentvault/agentvault/commit/76ba39f65cd8535c2612a5d426fa0e62e8047bac))
+
+
+### Bug Fixes
+
+* add release ([#13](https://github.com/agentvault/agentvault/issues/13)) ([f435bc3](https://github.com/agentvault/agentvault/commit/f435bc326d1ba25197a83dbcfb2306822e8dd66f))
+* build ([#1](https://github.com/agentvault/agentvault/issues/1)) ([8de12d1](https://github.com/agentvault/agentvault/commit/8de12d18b806a2e91f2283f9f2867708a6e46287))
+* claude md ([#2](https://github.com/agentvault/agentvault/issues/2)) ([fb4b528](https://github.com/agentvault/agentvault/commit/fb4b5285c4318bc943ab11f5152c4b1aa2280089))
+* claude md ([#3](https://github.com/agentvault/agentvault/issues/3)) ([e9083fe](https://github.com/agentvault/agentvault/commit/e9083fe397a7663369bf3c2404d6eefbd77d4adc))
+* initial ([bef6893](https://github.com/agentvault/agentvault/commit/bef689300d1dbe7ba5948ca23658c2727fc1b23a))
+* **proxy:** improve auth handling and OAuth token detection ([#9](https://github.com/agentvault/agentvault/issues/9)) ([6443779](https://github.com/agentvault/agentvault/commit/644377991db82aa2e0cc8f63fc51a24695547907))

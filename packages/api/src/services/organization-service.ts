@@ -1,0 +1,298 @@
+import { db } from "@agentvault/db";
+import { generateApiKey, ensureBootstrapOrgApiKey } from "./api-key-service";
+import { generateAccessToken } from "./agent-service";
+import { DEFAULT_AGENT_NAME, DEFAULT_AGENT_IDENTIFIER } from "../lib/constants";
+import { generateProjectId, generateOrganizationId } from "../lib/ids";
+import { getNewOrgPolicySeeder } from "../providers";
+import { logger } from "../lib/logger";
+
+export const slugify = (raw: string) =>
+  raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+/**
+ * Membership filter every ACCESS-GRANTING read applies: suspended members are
+ * treated as non-members by all authorization checks (the write-side lives in
+ * the EE team service; nothing sets "suspended" in OSS, so this is inert
+ * there). Deliberately NOT applied to display lists, seat counts, or the
+ * provisioning/JIT existence guards — filtering those would re-mint
+ * memberships for suspended users.
+ */
+export const activeMembershipWhere = {
+  status: { not: "suspended" },
+} as const;
+
+/**
+ * Resolve the user's default project: first organization → first project.
+ * Returns null when the user has no organization or no project (pre-bootstrap).
+ *
+ * Used by `resolveUser()`, `resolveApiAuth()`, and the session route to map
+ * an authenticated user to a project without creating anything.
+ */
+export const findUserDefaultProject = async (
+  userId: string,
+): Promise<{ id: string; organizationId: string } | null> => {
+  const membership = await db.organizationMember.findFirst({
+    where: { userId, ...activeMembershipWhere },
+    select: { organizationId: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!membership) return null;
+
+  return db.project.findFirst({
+    where: {
+      organizationId: membership.organizationId,
+      createdByUserId: userId,
+    },
+    select: { id: true, organizationId: true },
+    orderBy: { createdAt: "asc" },
+  });
+};
+
+/**
+ * The nested-write seeds every user-facing project is born with: one API
+ * key + the default agent. The single definition all provision sites
+ * spread into their `project.create` data (bootstrap, project creation,
+ * membership provisioning) — the guarded split-write variant for existing
+ * projects is `ensureProjectSeeds` below.
+ */
+export const defaultProjectSeed = (userId: string, userEmail: string) => ({
+  apiKeys: { create: { key: generateApiKey(), userId, userEmail } },
+  agents: {
+    create: {
+      name: DEFAULT_AGENT_NAME,
+      identifier: DEFAULT_AGENT_IDENTIFIER,
+      accessToken: generateAccessToken(),
+      isDefault: true,
+    },
+  },
+});
+
+/**
+ * Create an organization with a default project, API key, and default agent
+ * for a user who has no organization yet. Returns the created project.
+ *
+ * This is the single source of truth for the "first login" bootstrap flow.
+ * Called by:
+ *   - `GET /v1/auth/session` (cloud + OSS)
+ *   - `ensureLocalUser()` (OSS local-auth mode)
+ *   - `ensureUserDefaultOrgAndProject()` (EE project management)
+ */
+export const bootstrapOrganization = async (
+  userId: string,
+  userEmail: string,
+  displayName?: string,
+) => {
+  const orgName = displayName || userEmail.split("@")[0] || "Personal";
+  const baseSlug = slugify(orgName) || "personal";
+  const orgSlug = `${baseSlug}-${userId.slice(0, 8)}`;
+
+  const org = await db.organization.create({
+    data: {
+      id: generateOrganizationId(),
+      name: orgName,
+      slug: orgSlug,
+      members: { create: { userId, userEmail, role: "owner" } },
+    },
+    select: { id: true },
+  });
+
+  const project = await db.project.create({
+    data: {
+      id: generateProjectId(),
+      name: "Default",
+      slug: "default",
+      organizationId: org.id,
+      createdByUserId: userId,
+      createdByUserEmail: userEmail,
+      ...defaultProjectSeed(userId, userEmail),
+      // Creator's ProjectAccess binding (step 13), seeded owner (13c) with the
+      // project. Inert in OSS (nothing reads bindings without RBAC); load-bearing
+      // in cloud.
+      accessBindings: { create: { userId, role: "owner" } },
+    },
+    select: { id: true, organizationId: true },
+  });
+
+  // Seed the new org's initial published policy (cloud: a secure-by-default org
+  // Default Rule). Best-effort — a hiccup must not fail onboarding; the org then
+  // has no published generation and the engine allows until one is authored. OSS
+  // default is a no-op.
+  try {
+    await getNewOrgPolicySeeder().seed(org.id, project.id);
+  } catch (err) {
+    logger.warn({ err, organizationId: org.id }, "new-org policy seed failed");
+  }
+
+  return { project, organization: org };
+};
+
+/** The single shared organization for onprem (`single-org-shared` tenancy). */
+export const SHARED_ORG_SLUG = "default";
+export const SHARED_ORG_NAME = "Default";
+
+/**
+ * Find-or-create the single shared organization. The slug is `@unique`, so a
+ * concurrent first-login race resolves to one org — the create loser catches the
+ * unique violation and re-reads.
+ */
+const findOrCreateSharedOrg = async (): Promise<{ id: string }> => {
+  const existing = await db.organization.findUnique({
+    where: { slug: SHARED_ORG_SLUG },
+    select: { id: true },
+  });
+  if (existing) return existing;
+  try {
+    return await db.organization.create({
+      data: {
+        id: generateOrganizationId(),
+        name: SHARED_ORG_NAME,
+        slug: SHARED_ORG_SLUG,
+      },
+      select: { id: true },
+    });
+  } catch {
+    return db.organization.findUniqueOrThrow({
+      where: { slug: SHARED_ORG_SLUG },
+      select: { id: true },
+    });
+  }
+};
+
+/**
+ * The ORG-LEVEL part of the onprem bootstrap: ensure the single shared
+ * organization exists, the user is a member, and the operator bootstrap org API
+ * key is seeded — WITHOUT any project. Idempotent and concurrency-safe. Shared by
+ * `joinSharedOrganization` (first login) and the eager boot-time init, which
+ * provisions just the org + key so the instance is usable via the org key before
+ * anyone opens the web.
+ */
+export const ensureSharedOrgWithKey = async (
+  userId: string,
+  userEmail: string,
+): Promise<{ id: string }> => {
+  const org = await findOrCreateSharedOrg();
+
+  // Add the user to the shared org (idempotent on the composite PK).
+  await db.organizationMember.upsert({
+    where: { organizationId_userId: { organizationId: org.id, userId } },
+    create: { organizationId: org.id, userId, userEmail, role: "owner" },
+    update: {},
+  });
+
+  // Ensure the shared org's bootstrap API key exists (operator-supplied via
+  // ONECLI_ORG_API_KEY / _FILE, else generated). Idempotent — no-ops once seeded.
+  await ensureBootstrapOrgApiKey({ organizationId: org.id, userId, userEmail });
+
+  // Seed the shared org's initial published policy (step 9.5 — onprem rides
+  // the EE engine, so a fresh instance starts on v2 directly). Best-effort +
+  // idempotent, like the per-user-org bootstrap above.
+  try {
+    await getNewOrgPolicySeeder().seed(org.id);
+  } catch (err) {
+    logger.warn(
+      { err, organizationId: org.id },
+      "shared-org policy seed failed",
+    );
+  }
+
+  return org;
+};
+
+/**
+ * Single-org (onprem) first-login bootstrap: ensure the shared org + operator key
+ * (via `ensureSharedOrgWithKey`), then give the user their own default project
+ * inside it. Idempotent and concurrency-safe. Mirrors `bootstrapOrganization`'s
+ * return shape — the project apiKey + default agent are seeded by the caller's
+ * `ensureProjectSeeds`.
+ */
+export const joinSharedOrganization = async (
+  userId: string,
+  userEmail: string,
+) => {
+  const org = await ensureSharedOrgWithKey(userId, userEmail);
+
+  // Each user gets their own default project in the shared org. The project slug
+  // must be unique per org (`@@unique([organizationId, slug])`); since every user
+  // shares this one org (unlike the per-user orgs in `bootstrapOrganization`), use
+  // the full user id so the slug can never collide.
+  let project = await db.project.findFirst({
+    where: { organizationId: org.id, createdByUserId: userId },
+    select: { id: true, organizationId: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!project) {
+    project = await db.project.create({
+      data: {
+        id: generateProjectId(),
+        name: "Default",
+        slug: `default-${userId}`,
+        organizationId: org.id,
+        createdByUserId: userId,
+        createdByUserEmail: userEmail,
+        // Creator's ProjectAccess binding (step 13), seeded owner (13c). Inert in OSS.
+        accessBindings: { create: { userId, role: "owner" } },
+      },
+      select: { id: true, organizationId: true },
+    });
+    // Seed the new project's initial published policy (step 9.5) — a no-op
+    // for the org-scope EE seeder (idempotent on the org's existing
+    // generation), load-bearing where the seeder is project-scoped.
+    try {
+      await getNewOrgPolicySeeder().seed(org.id, project.id);
+    } catch (err) {
+      logger.warn(
+        { err, organizationId: org.id, projectId: project.id },
+        "shared-org project policy seed failed",
+      );
+    }
+  }
+
+  return { project, organization: org };
+};
+
+export const validateOrgName = (raw: string): string => {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.length > 255) {
+    throw new Error("Organization name must be 1-255 characters");
+  }
+  return trimmed;
+};
+
+/**
+ * Ensure a project has an API key for the given user and a default agent.
+ * Idempotent — skips creation if they already exist.
+ */
+export const ensureProjectSeeds = async (
+  projectId: string,
+  userId: string,
+  userEmail: string,
+) => {
+  const hasKey = await db.apiKey.findFirst({
+    where: { userId, projectId },
+    select: { id: true },
+  });
+  if (!hasKey) {
+    await db.apiKey.create({
+      data: { key: generateApiKey(), userId, userEmail, projectId },
+    });
+  }
+
+  const hasDefaultAgent = await db.agent.findFirst({
+    where: { projectId, isDefault: true },
+    select: { id: true },
+  });
+  if (!hasDefaultAgent) {
+    await db.agent.create({
+      data: {
+        name: DEFAULT_AGENT_NAME,
+        identifier: DEFAULT_AGENT_IDENTIFIER,
+        accessToken: generateAccessToken(),
+        isDefault: true,
+        projectId,
+      },
+    });
+  }
+};

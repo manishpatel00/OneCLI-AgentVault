@@ -1,0 +1,159 @@
+import { Hono } from "hono";
+import type { ApiEnv } from "../types";
+import { authMiddleware, requireProjectId } from "../middleware/auth";
+import { invalidateGatewayCache } from "../lib/gateway-invalidate";
+import {
+  listAgents,
+  createAgent,
+  agentExistsByIdentifier,
+  getDefaultAgent,
+  setDefaultAgent,
+  renameAgent,
+  deleteAgent,
+  regenerateAgentToken,
+  updateAgentSecretMode,
+} from "../services/agent-service";
+import {
+  withAudit,
+  AUDIT_ACTIONS,
+  AUDIT_SERVICES,
+  AUDIT_SOURCE,
+} from "../services/audit-service";
+import {
+  createAgentSchema,
+  renameAgentSchema,
+  secretModeSchema,
+} from "../validations/agent";
+import { getResourceHooks } from "../providers";
+
+export const agentRoutes = () => {
+  const app = new Hono<ApiEnv>();
+  app.use("*", authMiddleware);
+
+  // GET /agents
+  app.get("/", async (c) => {
+    const auth = c.get("auth");
+    const agents = await listAgents(requireProjectId(auth));
+    return c.json(agents);
+  });
+
+  // POST /agents
+  app.post("/", async (c) => {
+    const auth = c.get("auth");
+    const body = await c.req.json().catch(() => null);
+    const parsed = createAgentSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid request body" },
+        400,
+      );
+    }
+
+    const projectId = requireProjectId(auth);
+
+    // The agent quota gates *new* agents only -- re-creating an existing
+    // identifier consumes no slot. Skip the quota check when it already exists
+    // so createAgent returns the canonical 409 instead of a 403 that shadows it
+    // at the cap and breaks idempotent ensureAgent. See agentvault/node-sdk#40.
+    if (!(await agentExistsByIdentifier(projectId, parsed.data.identifier))) {
+      await getResourceHooks().beforeCreateAgent(
+        auth.organizationId,
+        projectId,
+      );
+    }
+
+    const agent = await createAgent(
+      projectId,
+      parsed.data.name,
+      parsed.data.identifier,
+      parsed.data.parentIdentifier,
+    );
+    invalidateGatewayCache(c.req.raw);
+    return c.json(agent, 201);
+  });
+
+  // GET /agents/default
+  app.get("/default", async (c) => {
+    const auth = c.get("auth");
+    const agent = await getDefaultAgent(requireProjectId(auth));
+    if (!agent) {
+      return c.json({ error: "No default agent found" }, 404);
+    }
+    return c.json(agent);
+  });
+
+  // PATCH /agents/:agentId
+  app.patch("/:agentId", async (c) => {
+    const auth = c.get("auth");
+    const agentId = c.req.param("agentId");
+    const body = await c.req.json().catch(() => null);
+    const parsed = renameAgentSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid request body" },
+        400,
+      );
+    }
+
+    await renameAgent(requireProjectId(auth), agentId, parsed.data.name);
+    return c.json({ success: true });
+  });
+
+  // DELETE /agents/:agentId
+  app.delete("/:agentId", async (c) => {
+    const auth = c.get("auth");
+    const agentId = c.req.param("agentId");
+    await deleteAgent(requireProjectId(auth), agentId);
+    invalidateGatewayCache(c.req.raw);
+    return c.body(null, 204);
+  });
+
+  // POST /agents/:agentId/set-default
+  app.post("/:agentId/set-default", async (c) => {
+    const auth = c.get("auth");
+    const agentId = c.req.param("agentId");
+    await setDefaultAgent(requireProjectId(auth), agentId);
+    invalidateGatewayCache(c.req.raw);
+    return c.json({ success: true });
+  });
+
+  // POST /agents/:agentId/regenerate-token
+  app.post("/:agentId/regenerate-token", async (c) => {
+    const auth = c.get("auth");
+    const agentId = c.req.param("agentId");
+    const result = await regenerateAgentToken(requireProjectId(auth), agentId);
+    invalidateGatewayCache(c.req.raw);
+    return c.json(result);
+  });
+
+  // PATCH /agents/:agentId/secret-mode
+  app.patch("/:agentId/secret-mode", async (c) => {
+    const auth = c.get("auth");
+    const agentId = c.req.param("agentId");
+    const body = await c.req.json().catch(() => null);
+    const parsed = secretModeSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid request body" },
+        400,
+      );
+    }
+
+    const projectId = requireProjectId(auth);
+    await withAudit(
+      () => updateAgentSecretMode(projectId, agentId, parsed.data.mode),
+      () => ({
+        projectId,
+        userId: auth.userId,
+        userEmail: auth.userEmail,
+        action: AUDIT_ACTIONS.UPDATE,
+        service: AUDIT_SERVICES.AGENT,
+        source: AUDIT_SOURCE.API,
+        metadata: { agentId, secretMode: parsed.data.mode },
+      }),
+    );
+    return c.json({ success: true });
+  });
+
+  return app;
+};

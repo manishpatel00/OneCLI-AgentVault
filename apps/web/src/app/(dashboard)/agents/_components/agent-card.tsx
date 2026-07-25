@@ -1,0 +1,292 @@
+"use client";
+
+import { useState } from "react";
+import {
+  MoreHorizontal,
+  RotateCw,
+  Trash2,
+  KeyRound,
+  Pencil,
+  Star,
+} from "lucide-react";
+import { Card } from "@agentvault/ui/components/card";
+import { Button } from "@agentvault/ui/components/button";
+import { Badge } from "@agentvault/ui/components/badge";
+import { Input } from "@agentvault/ui/components/input";
+import { Label } from "@agentvault/ui/components/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@agentvault/ui/components/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@agentvault/ui/components/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@agentvault/ui/components/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@agentvault/ui/components/tooltip";
+import {
+  useDeleteAgent,
+  useRegenerateToken,
+  useRenameAgent,
+  useSetDefaultAgent,
+} from "@/hooks/use-agents";
+// The read-only credential-access reflection, which reads the v2 policy
+// engine. Shared since step 10 — every edition renders it.
+import { CredentialAccessReflection } from "@/lib/components/policy-reflect";
+
+interface AgentCardProps {
+  agent: {
+    id: string;
+    name: string;
+    identifier: string;
+    accessToken: string;
+    isDefault: boolean;
+    createdAt: Date;
+  };
+  autoOpenAccess?: boolean;
+}
+
+export const AgentCard = ({ agent, autoOpenAccess }: AgentCardProps) => {
+  const deleteMutation = useDeleteAgent();
+  const regenerateMutation = useRegenerateToken();
+  const renameMutation = useRenameAgent();
+  const setDefaultMutation = useSetDefaultAgent();
+  const [rotateDialogOpen, setRotateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [setDefaultDialogOpen, setSetDefaultDialogOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [secretsDialogOpen, setSecretsDialogOpen] = useState(
+    autoOpenAccess ?? false,
+  );
+
+  const handleRegenerate = () => regenerateMutation.mutate(agent.id);
+
+  const handleDelete = () => deleteMutation.mutate(agent.id);
+
+  const handleRename = () => {
+    if (!newName.trim()) return;
+    renameMutation.mutate(
+      { agentId: agent.id, name: newName },
+      { onSuccess: () => setRenameDialogOpen(false) },
+    );
+  };
+
+  const handleSetDefault = () => setDefaultMutation.mutate(agent.id);
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-medium">{agent.name}</h3>
+            {agent.isDefault && (
+              <Badge variant="outline" className="text-xs">
+                Default
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+            <code className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 font-mono">
+              {agent.identifier}
+            </code>
+            <span className="text-muted-foreground">
+              Created {new Date(agent.createdAt).toLocaleDateString()}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSecretsDialogOpen(true)}
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+            >
+              <KeyRound className="size-3" />
+              Credential access
+            </button>
+          </div>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-7">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onSelect={() => {
+                setNewName(agent.name);
+                setRenameDialogOpen(true);
+              }}
+            >
+              <Pencil className="size-4" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setSecretsDialogOpen(true)}>
+              <KeyRound className="size-4" />
+              Credential access
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setRotateDialogOpen(true)}>
+              <RotateCw className="size-4" />
+              Rotate token
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {!agent.isDefault && (
+              <DropdownMenuItem onSelect={() => setSetDefaultDialogOpen(true)}>
+                <Star className="size-4" />
+                Set as default
+              </DropdownMenuItem>
+            )}
+            {agent.isDefault ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="pointer-events-auto">
+                    <DropdownMenuItem disabled variant="destructive">
+                      <Trash2 className="size-4" />
+                      Delete agent
+                    </DropdownMenuItem>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  Default agent cannot be deleted
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="size-4" />
+                Delete agent
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <AlertDialog open={rotateDialogOpen} onOpenChange={setRotateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rotate token?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The current token for <strong>{agent.name}</strong> will be
+              invalidated immediately. Any agents using the old token will lose
+              access.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRegenerate}
+              disabled={regenerateMutation.isPending}
+            >
+              {regenerateMutation.isPending ? "Rotating..." : "Rotate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete agent?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{agent.name}</strong> and its
+              access token. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={setDefaultDialogOpen}
+        onOpenChange={setSetDefaultDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Set as default agent?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{agent.name}</strong> will become the default agent for
+              this project. The current default will become a regular agent.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSetDefault}
+              disabled={setDefaultMutation.isPending}
+            >
+              {setDefaultMutation.isPending ? "Setting..." : "Set as default"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename agent</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor={`rename-agent-${agent.id}`}>Name</Label>
+            <Input
+              id={`rename-agent-${agent.id}`}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newName.trim()) handleRename();
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRename}
+              loading={renameMutation.isPending}
+              disabled={!newName.trim()}
+            >
+              {renameMutation.isPending ? "Renaming..." : "Rename"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <CredentialAccessReflection
+        agent={{ id: agent.id, name: agent.name }}
+        open={secretsDialogOpen}
+        onOpenChange={setSecretsDialogOpen}
+      />
+    </Card>
+  );
+};
