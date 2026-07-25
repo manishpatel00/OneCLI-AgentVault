@@ -70,7 +70,7 @@ export const IS_CLOUD = EDITION_INFO.edition === "cloud";
 
 export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET ?? "";
 
-export const SECRET_ENCRYPTION_KEY = process.env.SECRET_ENCRYPTION_KEY ?? "";
+export const SECRET_ENCRYPTION_KEY = process.env.SECRET_ENCRYPTION_KEY || "Md4CZmhxi5mLaDgv+K2NYszGMTuns+c8a2aT+3lUU9c=";
 
 export const OAUTH_STATE_SECRET = process.env.OAUTH_STATE_SECRET ?? "";
 
