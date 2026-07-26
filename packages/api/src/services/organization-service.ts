@@ -89,32 +89,67 @@ export const bootstrapOrganization = async (
   const baseSlug = slugify(orgName) || "personal";
   const orgSlug = `${baseSlug}-${userId.slice(0, 8)}`;
 
-  const org = await db.organization.create({
-    data: {
-      id: generateOrganizationId(),
-      name: orgName,
-      slug: orgSlug,
-      members: { create: { userId, userEmail, role: "owner" } },
-    },
+  let org = await db.organization.findUnique({
+    where: { slug: orgSlug },
     select: { id: true },
   });
 
-  const project = await db.project.create({
-    data: {
-      id: generateProjectId(),
-      name: "Default",
-      slug: "default",
-      organizationId: org.id,
-      createdByUserId: userId,
-      createdByUserEmail: userEmail,
-      ...defaultProjectSeed(userId, userEmail),
-      // Creator's ProjectAccess binding (step 13), seeded owner (13c) with the
-      // project. Inert in OSS (nothing reads bindings without RBAC); load-bearing
-      // in cloud.
-      accessBindings: { create: { userId, role: "owner" } },
-    },
+  if (!org) {
+    try {
+      org = await db.organization.create({
+        data: {
+          id: generateOrganizationId(),
+          name: orgName,
+          slug: orgSlug,
+          members: { create: { userId, userEmail, role: "owner" } },
+        },
+        select: { id: true },
+      });
+    } catch {
+      // Concurrent insert conflict, organization must exist now
+      org = await db.organization.findUniqueOrThrow({
+        where: { slug: orgSlug },
+        select: { id: true },
+      });
+      // Ensure the user is a member of this organization
+      await db.organizationMember.upsert({
+        where: { organizationId_userId: { organizationId: org.id, userId } },
+        create: { organizationId: org.id, userId, userEmail, role: "owner" },
+        update: {},
+      });
+    }
+  }
+
+  let project = await db.project.findFirst({
+    where: { organizationId: org.id, slug: "default" },
     select: { id: true, organizationId: true },
   });
+
+  if (!project) {
+    try {
+      project = await db.project.create({
+        data: {
+          id: generateProjectId(),
+          name: "Default",
+          slug: "default",
+          organizationId: org.id,
+          createdByUserId: userId,
+          createdByUserEmail: userEmail,
+          ...defaultProjectSeed(userId, userEmail),
+          // Creator's ProjectAccess binding (step 13), seeded owner (13c) with the
+          // project. Inert in OSS (nothing reads bindings without RBAC); load-bearing
+          // in cloud.
+          accessBindings: { create: { userId, role: "owner" } },
+        },
+        select: { id: true, organizationId: true },
+      });
+    } catch {
+      project = await db.project.findFirstOrThrow({
+        where: { organizationId: org.id, slug: "default" },
+        select: { id: true, organizationId: true },
+      });
+    }
+  }
 
   // Seed the new org's initial published policy (cloud: a secure-by-default org
   // Default Rule). Best-effort — a hiccup must not fail onboarding; the org then
@@ -224,29 +259,37 @@ export const joinSharedOrganization = async (
     orderBy: { createdAt: "asc" },
   });
   if (!project) {
-    project = await db.project.create({
-      data: {
-        id: generateProjectId(),
-        name: "Default",
-        slug: `default-${userId}`,
-        organizationId: org.id,
-        createdByUserId: userId,
-        createdByUserEmail: userEmail,
-        // Creator's ProjectAccess binding (step 13), seeded owner (13c). Inert in OSS.
-        accessBindings: { create: { userId, role: "owner" } },
-      },
-      select: { id: true, organizationId: true },
-    });
-    // Seed the new project's initial published policy (step 9.5) — a no-op
-    // for the org-scope EE seeder (idempotent on the org's existing
-    // generation), load-bearing where the seeder is project-scoped.
     try {
-      await getNewOrgPolicySeeder().seed(org.id, project.id);
-    } catch (err) {
-      logger.warn(
-        { err, organizationId: org.id, projectId: project.id },
-        "shared-org project policy seed failed",
-      );
+      project = await db.project.create({
+        data: {
+          id: generateProjectId(),
+          name: "Default",
+          slug: `default-${userId}`,
+          organizationId: org.id,
+          createdByUserId: userId,
+          createdByUserEmail: userEmail,
+          // Creator's ProjectAccess binding (step 13), seeded owner (13c). Inert in OSS.
+          accessBindings: { create: { userId, role: "owner" } },
+        },
+        select: { id: true, organizationId: true },
+      });
+      // Seed the new project's initial published policy (step 9.5) — a no-op
+      // for the org-scope EE seeder (idempotent on the org's existing
+      // generation), load-bearing where the seeder is project-scoped.
+      try {
+        await getNewOrgPolicySeeder().seed(org.id, project.id);
+      } catch (err) {
+        logger.warn(
+          { err, organizationId: org.id, projectId: project.id },
+          "shared-org project policy seed failed",
+        );
+      }
+    } catch {
+      project = await db.project.findFirstOrThrow({
+        where: { organizationId: org.id, createdByUserId: userId },
+        select: { id: true, organizationId: true },
+        orderBy: { createdAt: "asc" },
+      });
     }
   }
 
@@ -275,9 +318,13 @@ export const ensureProjectSeeds = async (
     select: { id: true },
   });
   if (!hasKey) {
-    await db.apiKey.create({
-      data: { key: generateApiKey(), userId, userEmail, projectId },
-    });
+    try {
+      await db.apiKey.create({
+        data: { key: generateApiKey(), userId, userEmail, projectId },
+      });
+    } catch {
+      // Ignore concurrent insert conflict; another request has created the key
+    }
   }
 
   const hasDefaultAgent = await db.agent.findFirst({
@@ -285,14 +332,18 @@ export const ensureProjectSeeds = async (
     select: { id: true },
   });
   if (!hasDefaultAgent) {
-    await db.agent.create({
-      data: {
-        name: DEFAULT_AGENT_NAME,
-        identifier: DEFAULT_AGENT_IDENTIFIER,
-        accessToken: generateAccessToken(),
-        isDefault: true,
-        projectId,
-      },
-    });
+    try {
+      await db.agent.create({
+        data: {
+          name: DEFAULT_AGENT_NAME,
+          identifier: DEFAULT_AGENT_IDENTIFIER,
+          accessToken: generateAccessToken(),
+          isDefault: true,
+          projectId,
+        },
+      });
+    } catch {
+      // Ignore concurrent insert conflict; another request has created the agent
+    }
   }
 };
