@@ -39,6 +39,7 @@ export default function DashboardLayout({
 
   const initSession = useCallback(async () => {
     let sessionData: Record<string, unknown> | null = null;
+    let errorMessage: string | null = null;
 
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -57,13 +58,27 @@ export default function DashboardLayout({
         if (res.ok) {
           sessionData = await res.json();
           break;
+        } else {
+          const text = await res.text();
+          let msg = "Failed to sync session with server. Database or backend is down.";
+          try {
+            const json = JSON.parse(text);
+            if (json.error) msg = json.error;
+          } catch {}
+          errorMessage = msg;
         }
       } catch {
-        // network error — fall through to retry
+        errorMessage = "Failed to communicate with the server. Please check your network.";
       }
       if (attempt < 2) {
         await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
       }
+    }
+
+    if (!sessionData) {
+      signOutRef.current();
+      router.replace(`/auth/login?error=${encodeURIComponent(errorMessage ?? "Session sync failed.")}`);
+      return;
     }
 
     try {
