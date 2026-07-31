@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Shield, Lock, Activity, Users, CheckCircle2, Code2, Link2, ShieldCheck, Sun, Moon } from "lucide-react";
+import { ArrowRight, Check, Lock, Activity, Users, CheckCircle2, Code2, Link2, ShieldCheck, Sun, Moon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { useTheme } from "next-themes";

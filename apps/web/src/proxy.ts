@@ -32,6 +32,19 @@ const getSetupError = (): SetupErrorCode | null => {
 };
 
 export const proxy = (request: NextRequest) => {
+  if (request.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": request.headers.get("origin") || "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers") || "Content-Type, Authorization, x-project-id, x-organization-id",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
+
   const { pathname } = request.nextUrl;
 
   const error = getSetupError();

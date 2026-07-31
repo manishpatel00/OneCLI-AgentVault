@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@agentvault/ui/components/button";
 import { useAuth } from "@/providers/auth-provider";
@@ -10,14 +10,24 @@ import { CAPS } from "@/lib/env";
 
 export const LoginContent = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryError = searchParams.get("error");
   const { isAuthenticated, isLoading, user, signIn, signOut } = useAuth();
   const [signingIn, setSigningIn] = useState(false);
+  const [error, setError] = useState<string | null>(queryError);
+
+  useEffect(() => {
+    if (queryError) {
+      setError(queryError);
+    }
+  }, [queryError]);
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
 
     const syncUser = async () => {
       try {
+        setError(null);
         const res = await apiFetch("/v1/auth/session");
         if (res.ok) {
           const data = (await res.json()) as { projectId?: string };
@@ -30,9 +40,21 @@ export const LoginContent = () => {
           );
         } else if (res.status === 401) {
           await signOut();
+        } else {
+          const text = await res.text();
+          let msg = "Failed to sync session with server. Database or backend is down.";
+          try {
+            const json = JSON.parse(text);
+            if (json.error) msg = json.error;
+          } catch {}
+          setError(msg);
+          setSigningIn(false);
+          await signOut();
         }
       } catch {
-        // Transient error (deploy, network) — don't sign out
+        setError("Failed to communicate with the server. Please check your network.");
+        setSigningIn(false);
+        await signOut();
       }
     };
 
@@ -54,7 +76,7 @@ export const LoginContent = () => {
         </span>
       </div>
 
-      {isLoading || isAuthenticated ? (
+      {isLoading || (isAuthenticated && !error) ? (
         <div className="flex flex-col items-center gap-4 py-20">
           <div className="text-brand h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent" />
           <p className="text-muted-foreground text-sm">
@@ -75,12 +97,18 @@ export const LoginContent = () => {
           </div>
 
           <div className="w-full max-w-sm rounded-2xl border border-border/50 bg-card p-8">
+            {error && (
+              <div className="mb-4 rounded-lg bg-destructive/15 p-3 text-sm text-destructive font-medium border border-destructive/25 leading-relaxed break-words">
+                {error}
+              </div>
+            )}
             <Button
               size="lg"
               variant="outline"
               className="w-full gap-2 text-base bg-white text-black hover:bg-gray-100 dark:bg-white dark:text-black dark:hover:bg-gray-100"
               loading={signingIn}
               onClick={() => {
+                setError(null);
                 setSigningIn(true);
                 signIn();
               }}

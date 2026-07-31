@@ -68,6 +68,7 @@ export const AgentsContent = ({
           </p>
         </Card>
       ) : (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         agents.map((agent: any) => (
           <AgentCard
             key={agent.id}
