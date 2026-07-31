@@ -48,7 +48,7 @@ export const resolveProjectContext = async (
 
   if (headerProjectId) {
     const memberOrgIds = user.organizationMemberships.map(
-      (m: any) => m.organizationId,
+      (m: { organizationId: string }) => m.organizationId,
     );
     const project = await db.project.findFirst({
       where: {

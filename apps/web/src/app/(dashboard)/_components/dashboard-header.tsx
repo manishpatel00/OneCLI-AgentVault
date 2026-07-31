@@ -36,6 +36,7 @@ const GitHubIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DiscordIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 24 24"
