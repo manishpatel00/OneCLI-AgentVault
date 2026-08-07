@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   SessionProvider,
   useSession,
@@ -11,6 +11,8 @@ import { AuthContext } from "@/providers/auth-provider";
 import type { AuthUser, AuthContextValue } from "@/lib/auth/types";
 import type { AuthMode } from "@/lib/auth/auth-mode";
 import { LOCAL_USER } from "./local-user";
+
+const SESSION_LOAD_TIMEOUT_MS = 8_000;
 
 // Local mode is intentionally single-user: the server authenticates every request
 // as local-admin. A browser-only localStorage flag must not gate access or imply
@@ -37,6 +39,20 @@ const LocalAuthProvider = ({ children }: { children: ReactNode }) => {
 
 const OAuthInner = ({ children }: { children: ReactNode }) => {
   const { data: session, status } = useSession();
+  const [sessionTimedOut, setSessionTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (status !== "loading") {
+      setSessionTimedOut(false);
+      return;
+    }
+
+    const timeout = setTimeout(
+      () => setSessionTimedOut(true),
+      SESSION_LOAD_TIMEOUT_MS,
+    );
+    return () => clearTimeout(timeout);
+  }, [status]);
 
   const user = useMemo<AuthUser | null>(() => {
     if (!session?.user?.id || !session.user.email) return null;
@@ -55,15 +71,21 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
     await nextAuthSignOut({ callbackUrl: "/auth/login" });
   }, []);
 
+  const authError = sessionTimedOut
+    ? "Authentication service is taking longer than expected. Check AUTH_SECRET, GOOGLE_CLIENT_ID, and GOOGLE_CLIENT_SECRET in your deployment environment."
+    : null;
+
   const value = useMemo<AuthContextValue>(
     () => ({
       isAuthenticated: status === "authenticated" && !!user,
-      isLoading: status === "loading",
+      isLoading: status === "loading" && !sessionTimedOut,
       user,
+      canSignOut: true,
       signIn,
       signOut,
+      authError,
     }),
-    [status, user, signIn, signOut],
+    [status, user, signIn, signOut, sessionTimedOut, authError],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -72,11 +94,13 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
 export const AuthProviderImpl = ({
   children,
   authMode,
+  oauthConfigured,
 }: {
   children: ReactNode;
   authMode: AuthMode;
+  oauthConfigured: boolean;
 }) => {
-  if (authMode === "local") {
+  if (authMode === "local" || !oauthConfigured) {
     return <LocalAuthProvider>{children}</LocalAuthProvider>;
   }
 

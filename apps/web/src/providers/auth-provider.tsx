@@ -23,7 +23,13 @@ export const useAuth = () => {
 export const AuthProvider = ({
   children,
   authMode,
+  oauthConfigured,
 }: {
   children: ReactNode;
   authMode: AuthMode;
-}) => <AuthProviderImpl authMode={authMode}>{children}</AuthProviderImpl>;
+  oauthConfigured: boolean;
+}) => (
+  <AuthProviderImpl authMode={authMode} oauthConfigured={oauthConfigured}>
+    {children}
+  </AuthProviderImpl>
+);
