@@ -11,7 +11,7 @@
     "lint": "eslint --max-warnings 0",
     "lint:fix": "eslint --fix --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/auth/*.test.mjs"
+    "test": "node --experimental-strip-types --test src/lib/auth/*.test.mjs src/lib/*.test.mjs"
   },
   "dependencies": {
     "@aws-amplify/adapter-nextjs": "^1.7.2",

@@ -4,14 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { GATEWAY_API_URL, IS_CLOUD } from "@/lib/env";
 import { getGatewayFetchOptions } from "@/lib/gateway-auth";
+import { readGatewayApiUrl } from "@/lib/gateway-api-url";
 
 export const getGatewayApiUrl = (): string => {
   if (IS_CLOUD) return GATEWAY_API_URL;
-  return (
-    (typeof window !== "undefined" &&
-      ((window as unknown as Record<string, unknown>)
-        .__GATEWAY_API_URL__ as string)) ||
-    GATEWAY_API_URL
+  return readGatewayApiUrl(
+    GATEWAY_API_URL,
+    typeof document === "undefined" ? undefined : document,
   );
 };
 

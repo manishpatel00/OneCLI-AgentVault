@@ -15,6 +15,7 @@
 3. Remove the image's fixed `NEXTAUTH_URL` and allow Compose `APP_URL` to be set explicitly for public deployments. Document proxy headers and Google callback registration.
 4. Distinguish 401 from transient session errors; retain provider state and provide a retry action rather than signing out on backend failure. Apply this on both login and dashboard entry.
 5. Add auth configuration/session regression tests and run them in CI. Apply the repository's existing Prettier rules to the ten files that previously failed the CI format gate (formatting-only changes outside the auth flow).
+6. Keep the OSS gateway runtime URL in an inert server-rendered meta tag rather than executable inline JavaScript, so strict nonce-based Content Security Policies do not break gateway configuration. A `VM… injectedFunction` error on `accounts.google.com` and a `generate_204` request blocked by the client originate outside this app (typically a browser extension or privacy filter); diagnose those separately in a clean browser profile.
 
 ## Verification / rollout
 
