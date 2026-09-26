@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useEffect, type ReactNode } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import {
   SessionProvider,
   useSession,
@@ -10,40 +10,26 @@ import {
 import { AuthContext } from "@/providers/auth-provider";
 import type { AuthUser, AuthContextValue } from "@/lib/auth/types";
 import type { AuthMode } from "@/lib/auth/auth-mode";
+import { LOCAL_USER } from "./local-user";
 
-const LOCAL_USER: AuthUser = {
-  id: "local-admin",
-  email: "admin@localhost",
-  name: "Admin",
-};
-
+// Local mode is intentionally single-user: the server authenticates every request
+// as local-admin. A browser-only localStorage flag must not gate access or imply
+// that "sign out" revokes server access.
 const LocalAuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const authed = localStorage.getItem("local_auth_authenticated") === "true";
-    setIsAuthenticated(authed);
-    setIsLoading(false);
-  }, []);
-
   const value = useMemo<AuthContextValue>(
     () => ({
-      isAuthenticated,
-      isLoading,
-      user: isAuthenticated ? LOCAL_USER : null,
+      isAuthenticated: true,
+      isLoading: false,
+      user: LOCAL_USER,
+      canSignOut: false,
       signIn: async () => {
-        localStorage.setItem("local_auth_authenticated", "true");
-        setIsAuthenticated(true);
         window.location.href = "/overview";
       },
       signOut: async () => {
-        localStorage.removeItem("local_auth_authenticated");
-        setIsAuthenticated(false);
         window.location.href = "/";
       },
     }),
-    [isAuthenticated, isLoading],
+    [],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -71,7 +57,7 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      isAuthenticated: status === "authenticated",
+      isAuthenticated: status === "authenticated" && !!user,
       isLoading: status === "loading",
       user,
       signIn,

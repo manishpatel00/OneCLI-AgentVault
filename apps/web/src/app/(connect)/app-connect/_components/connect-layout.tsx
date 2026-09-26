@@ -29,7 +29,12 @@ export const ConnectLayout = ({
         {/* Two logos with animated connector */}
         <div className="flex items-center gap-5">
           <div className="flex size-14 items-center justify-center rounded-2xl border bg-card shadow-sm">
-            <Image src="/logo-icon.svg" alt="AgentVault" width={26} height={26} />
+            <Image
+              src="/logo-icon.svg"
+              alt="AgentVault"
+              width={26}
+              height={26}
+            />
           </div>
           <LogoConnector variant={variant} />
           <div className="flex size-14 items-center justify-center rounded-2xl border bg-card shadow-sm">

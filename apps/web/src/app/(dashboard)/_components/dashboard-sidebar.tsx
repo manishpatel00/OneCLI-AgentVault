@@ -21,7 +21,7 @@ import {
 
 const SidebarThemeToggle = () => {
   const { resolvedTheme, setTheme } = useTheme();
-  
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -49,10 +49,7 @@ export const DashboardSidebar = ({
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
       <SidebarHeader className="h-12 justify-center group-data-[collapsible=icon]:px-0">
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-2"
-        >
+        <Link href="/" className="flex items-center gap-2 px-2">
           <Image
             src="/agentvault-logo.png"
             alt="AgentVault"

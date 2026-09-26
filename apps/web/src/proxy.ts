@@ -4,32 +4,22 @@ import {
   CAPS,
   IS_CLOUD,
   GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
   NEXTAUTH_SECRET,
   SECRET_ENCRYPTION_KEY,
 } from "@/lib/env";
+import { checkAuthSetup } from "@/lib/auth/setup-check";
 import { PROJECT_PATH_RE, ORG_PATH_RE } from "@/lib/navigation";
 import { isConnectOnlyAllowed } from "@/lib/connect-surface";
 
-type SetupErrorCode = "oauth-misconfigured" | "missing-encryption-key";
-
-/**
- * Returns the first configuration error found, or null if setup is valid.
- */
-const getSetupError = (): SetupErrorCode | null => {
-  if (IS_CLOUD) return null;
-
-  // NEXTAUTH_SECRET is set but Google OAuth creds are missing
-  if (NEXTAUTH_SECRET && !GOOGLE_CLIENT_ID) {
-    return "oauth-misconfigured";
-  }
-
-  // SECRET_ENCRYPTION_KEY is required for encrypting secrets
-  if (!SECRET_ENCRYPTION_KEY) {
-    return "missing-encryption-key";
-  }
-
-  return null;
-};
+const getSetupError = () =>
+  checkAuthSetup({
+    isCloud: IS_CLOUD,
+    nextAuthSecret: NEXTAUTH_SECRET,
+    googleClientId: GOOGLE_CLIENT_ID,
+    googleClientSecret: GOOGLE_CLIENT_SECRET,
+    encryptionKey: SECRET_ENCRYPTION_KEY,
+  });
 
 export const proxy = (request: NextRequest) => {
   if (request.method === "OPTIONS") {
@@ -38,7 +28,9 @@ export const proxy = (request: NextRequest) => {
       headers: {
         "Access-Control-Allow-Origin": request.headers.get("origin") || "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers") || "Content-Type, Authorization, x-project-id, x-organization-id",
+        "Access-Control-Allow-Headers":
+          request.headers.get("access-control-request-headers") ||
+          "Content-Type, Authorization, x-project-id, x-organization-id",
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Max-Age": "86400",
       },

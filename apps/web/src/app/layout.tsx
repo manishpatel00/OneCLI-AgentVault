@@ -54,11 +54,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className="bg-background">
       {!IS_CLOUD && (
         <head>
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `window.__GATEWAY_API_URL__=${JSON.stringify(GATEWAY_API_URL)}`,
-            }}
-          />
+          {/* Runtime config is data, not executable JavaScript. An inline script
+              is blocked by nonce-based Content Security Policies. */}
+          <meta name="agentvault-gateway-api-url" content={GATEWAY_API_URL} />
         </head>
       )}
       <body

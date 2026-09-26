@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { SidebarInset, SidebarProvider } from "@agentvault/ui/components/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@agentvault/ui/components/sidebar";
 import { DashboardSidebar } from "@dashboard/dashboard-sidebar";
 import { DashboardHeader } from "@dashboard/dashboard-header";
 import { SettingsNav } from "@/app/(dashboard)/settings/_components/settings-nav";
@@ -49,10 +52,11 @@ export default function DashboardLayout({
           return;
         }
         if (res.status === 409) {
-          // Identity conflict (relink rejected) — not transient, don't retry.
-          // Sign out; the login page re-derives and shows the reason on the
-          // next attempt.
-          signOutRef.current();
+          // Identity conflict is not transient. Keep the session so the login
+          // page can explain the problem and offer an explicit account switch.
+          router.replace(
+            "/auth/login?error=Account%20conflict.%20Sign%20out%20and%20choose%20another%20account.",
+          );
           return;
         }
         if (res.ok) {
@@ -60,7 +64,8 @@ export default function DashboardLayout({
           break;
         } else {
           const text = await res.text();
-          let msg = "Failed to sync session with server. Database or backend is down.";
+          let msg =
+            "Failed to sync session with server. Database or backend is down.";
           try {
             const json = JSON.parse(text);
             if (json.error) msg = json.error;
@@ -68,7 +73,8 @@ export default function DashboardLayout({
           errorMessage = msg;
         }
       } catch {
-        errorMessage = "Failed to communicate with the server. Please check your network.";
+        errorMessage =
+          "Failed to communicate with the server. Please check your network.";
       }
       if (attempt < 2) {
         await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
@@ -76,8 +82,11 @@ export default function DashboardLayout({
     }
 
     if (!sessionData) {
-      signOutRef.current();
-      router.replace(`/auth/login?error=${encodeURIComponent(errorMessage ?? "Session sync failed.")}`);
+      // Keep the provider session on transient backend failures. The login page
+      // shows the sync error and offers a retry without another OAuth round-trip.
+      router.replace(
+        `/auth/login?error=${encodeURIComponent(errorMessage ?? "Session sync failed.")}`,
+      );
       return;
     }
 

@@ -7,59 +7,65 @@ import { Button } from "@agentvault/ui/components/button";
 import { useAuth } from "@/providers/auth-provider";
 import { apiFetch } from "@/lib/api-fetch";
 import { CAPS } from "@/lib/env";
+import type { AuthMode } from "./auth-mode";
+import { syncLoginSession } from "./login-session";
 
-export const LoginContent = () => {
+export const LoginContent = ({ authMode }: { authMode: AuthMode }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryError = searchParams.get("error");
   const { isAuthenticated, isLoading, user, signIn, signOut } = useAuth();
   const [signingIn, setSigningIn] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [error, setError] = useState<string | null>(queryError);
 
   useEffect(() => {
-    if (queryError) {
-      setError(queryError);
-    }
+    if (queryError) setError(queryError);
   }, [queryError]);
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
+    let active = true;
 
     const syncUser = async () => {
-      try {
-        setError(null);
-        const res = await apiFetch("/v1/auth/session");
-        if (res.ok) {
-          const data = (await res.json()) as { projectId?: string };
-          if (CAPS.webSurface === "connect-only") {
-            router.replace("/app-connect");
-            return;
-          }
-          router.replace(
-            data.projectId ? `/p/${data.projectId}/overview` : "/overview",
-          );
-        } else if (res.status === 401) {
-          await signOut();
+      const result = await syncLoginSession(() => apiFetch("/v1/auth/session"));
+      if (!active) return;
+      if (result.status === "ok") {
+        if (CAPS.webSurface === "connect-only") {
+          router.replace("/app-connect");
         } else {
-          const text = await res.text();
-          let msg = "Failed to sync session with server. Database or backend is down.";
-          try {
-            const json = JSON.parse(text);
-            if (json.error) msg = json.error;
-          } catch {}
-          setError(msg);
-          setSigningIn(false);
-          await signOut();
+          router.replace(
+            result.projectId ? `/p/${result.projectId}/overview` : "/overview",
+          );
         }
-      } catch {
-        setError("Failed to communicate with the server. Please check your network.");
-        setSigningIn(false);
+      } else if (result.status === "unauthorized") {
+        // A stale OAuth cookie cannot be used for session sync.
         await signOut();
+      } else {
+        // Keep the provider session on transient failures, so the user can retry
+        // without another OAuth round-trip. Local mode cannot be signed out.
+        setError(result.message);
+        setSigningIn(false);
       }
     };
 
-    syncUser();
-  }, [isAuthenticated, user, router, signOut]);
+    void syncUser();
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, user, router, signOut, retry]);
+
+  const handleSignIn = async () => {
+    setError(null);
+    setSigningIn(true);
+    try {
+      await signIn();
+    } catch {
+      setError("Unable to start sign-in. Please try again.");
+    } finally {
+      setSigningIn(false);
+    }
+  };
 
   return (
     <div className="bg-background flex min-h-svh flex-col items-center justify-center px-6 pb-24">
@@ -102,30 +108,56 @@ export const LoginContent = () => {
                 {error}
               </div>
             )}
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full gap-2 text-base bg-white text-black hover:bg-gray-100 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-              loading={signingIn}
-              onClick={() => {
-                setError(null);
-                setSigningIn(true);
-                signIn();
-              }}
-            >
-              <GoogleIcon />
-              {signingIn ? "Redirecting..." : "Continue with Google"}
-            </Button>
-            <p className="text-muted-foreground mt-4 text-center text-xs">
-              By continuing, you acknowledge AgentVault&apos;s{" "}
-              <a
-                href="https://agentvault.sh/privacy"
-                className="underline hover:text-foreground"
+            {isAuthenticated && error ? (
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setError(null);
+                  setRetry((count) => count + 1);
+                }}
               >
-                Privacy Policy
-              </a>
-              .
-            </p>
+                Retry session sync
+              </Button>
+            ) : authMode === "local" ? (
+              <p className="text-muted-foreground text-center text-sm">
+                Local mode does not require a login. Connecting to your
+                dashboard...
+              </p>
+            ) : (
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full gap-2 text-base bg-white text-black hover:bg-gray-100 dark:bg-white dark:text-black dark:hover:bg-gray-100"
+                loading={signingIn}
+                onClick={() => void handleSignIn()}
+              >
+                <GoogleIcon />
+                {signingIn ? "Redirecting..." : "Continue with Google"}
+              </Button>
+            )}
+            {authMode !== "local" && isAuthenticated && error && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="mt-3 w-full"
+                onClick={() => void signOut()}
+              >
+                Sign out and choose another account
+              </Button>
+            )}
+            {authMode !== "local" && (
+              <p className="text-muted-foreground mt-4 text-center text-xs">
+                By continuing, you acknowledge AgentVault&apos;s{" "}
+                <a
+                  href="https://agentvault.sh/privacy"
+                  className="underline hover:text-foreground"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </p>
+            )}
           </div>
         </>
       )}

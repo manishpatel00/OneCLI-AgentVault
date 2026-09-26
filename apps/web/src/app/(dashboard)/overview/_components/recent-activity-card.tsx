@@ -121,7 +121,8 @@ export const RecentActivityCard = () => {
                           <KeyRound className="size-2.5 text-muted-foreground/40 shrink-0" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
-                          Agent&apos;s own credentials - not managed by AgentVault
+                          Agent&apos;s own credentials - not managed by
+                          AgentVault
                         </TooltipContent>
                       </Tooltip>
                     )}

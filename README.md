@@ -2,7 +2,6 @@
 
 <img width="1920" height="558" alt="image" src="https://github.com/user-attachments/assets/d9c930ff-ab10-440c-aa21-77c917afb354" />
 
-
 <img src="assets/agentvault-logo-light.gif" alt="OneCLI-AgentVault Logo" width="100%" />
 
 **The privacy-first credential gateway and isolation proxy for AI agents.**
@@ -20,12 +19,9 @@ Store once. Inject at the network layer. Intercept securely. AI agents never see
 
 </div>
 
-
-
-
 ---
 
-> *OneCLI-AgentVault is the ultimate trust and security layer for AI coding agents (like Cursor, Claude Code) and autonomous workflows (n8n, Dify).*
+> _OneCLI-AgentVault is the ultimate trust and security layer for AI coding agents (like Cursor, Claude Code) and autonomous workflows (n8n, Dify)._
 
 - **Why it matters:** AI agents write and execute code natively in local terminals, but giving them raw credentials is a major liability. Prompt injection can trigger malicious actions, or a loop bug can wipe out databases/emails. OneCLI-AgentVault intercepts all traffic at the network layer to prevent credential leaks, restrict malicious endpoints (like blocking `DELETE` requests), and enforce strict rate limits.
 
@@ -49,26 +45,26 @@ OneCLI-AgentVault is an open-source gateway that sits between your AI agents and
   <img alt="OneCLI Architecture" src="assets/onecli-architecture-dark.svg" width="100%">
 </picture>
 
-| Component | Role |
-|---|---|
-| **[Rust Gateway](apps/gateway)** | Fast HTTP gateway that intercepts outbound requests and injects credentials. Agents authenticate with access tokens via `Proxy-Authorization` headers. |
-| **[Web Dashboard](apps/web)** | Next.js app for managing agents, secrets, and permissions. Provides the API the gateway uses to resolve which credentials to inject for each request. |
-| **Secret Store** | AES-256-GCM encrypted credential storage. Secrets are decrypted only at request time, matched by host and path patterns, and injected by the gateway as headers or URL query parameters. |
+| Component                        | Role                                                                                                                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[Rust Gateway](apps/gateway)** | Fast HTTP gateway that intercepts outbound requests and injects credentials. Agents authenticate with access tokens via `Proxy-Authorization` headers.                                   |
+| **[Web Dashboard](apps/web)**    | Next.js app for managing agents, secrets, and permissions. Provides the API the gateway uses to resolve which credentials to inject for each request.                                    |
+| **Secret Store**                 | AES-256-GCM encrypted credential storage. Secrets are decrypted only at request time, matched by host and path patterns, and injected by the gateway as headers or URL query parameters. |
 
 ---
 
-##  Tech Stack
+## Tech Stack
 
 OneCLI-AgentVault is built using a modern, performant, and type-safe stack:
 
-| Core Technology | Description |
-|---|---|
-| ![Rust](https://img.shields.io/badge/Rust-1.80%2B-orange?style=flat-square&logo=rust) | High-performance MITM interception proxy engine |
-| ![Next.js](https://img.shields.io/badge/Next.js-16.1.0-black?style=flat-square&logo=nextdotjs) | Dashboard UI & configuration API management |
-| ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript) | Type-safe client and API route coordination |
-| ![Prisma](https://img.shields.io/badge/Prisma-6.x-blue?style=flat-square&logo=prisma) | Modern database toolkit and object-relational mapping |
-| ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql) | Secure persistent storage for agent configuration |
-| ![Docker](https://img.shields.io/badge/Docker-Compose-blue?style=flat-square&logo=docker) | Containerized local environment and deployment runtime |
+| Core Technology                                                                                     | Description                                             |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| ![Rust](https://img.shields.io/badge/Rust-1.80%2B-orange?style=flat-square&logo=rust)               | High-performance MITM interception proxy engine         |
+| ![Next.js](https://img.shields.io/badge/Next.js-16.1.0-black?style=flat-square&logo=nextdotjs)      | Dashboard UI & configuration API management             |
+| ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript)   | Type-safe client and API route coordination             |
+| ![Prisma](https://img.shields.io/badge/Prisma-6.x-blue?style=flat-square&logo=prisma)               | Modern database toolkit and object-relational mapping   |
+| ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql)    | Secure persistent storage for agent configuration       |
+| ![Docker](https://img.shields.io/badge/Docker-Compose-blue?style=flat-square&logo=docker)           | Containerized local environment and deployment runtime  |
 | ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?style=flat-square&logo=tailwindcss) | High-end visual aesthetics and dark mode implementation |
 
 ---
@@ -85,7 +81,8 @@ docker compose -f docker/docker-compose.yml up -d --wait
 
 Open **http://localhost:10254**, create an agent, add your secrets, and point your agent's HTTP gateway to `localhost:10255`.
 
-> The Quick Start runs OneCLI in **local mode** (single-user, no login), so no `.env` or `NEXTAUTH_SECRET` is required. To enable Google OAuth for multiple users, set `NEXTAUTH_SECRET` and the Google credentials (see [Configuration](#configuration)).
+> The Quick Start runs OneCLI in **local mode** (single-user, no login). Anyone who can reach the dashboard has full access; do not expose it publicly. To enable Google OAuth, set `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` together (see [Configuration](#configuration)).
+> For a public URL behind a reverse proxy, set `APP_URL` in `.env`, forward the original Host and X-Forwarded-Proto headers, and register `https://YOUR_HOST/api/auth/callback/google` in Google Cloud Console.
 
 ## Features
 
@@ -132,12 +129,15 @@ pnpm db:migrate     # Apply migrations
 pnpm dev
 ```
 
+For manual development, generate `SECRET_ENCRYPTION_KEY` in `.env` with
+`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
+
 Dashboard at **http://localhost:10254**, gateway at **http://localhost:10255**.
 
 ### Commands
 
 | Command            | Description                     |
-| ------------------ | -------------------------------- |
+| ------------------ | ------------------------------- |
 | `pnpm dev`         | Start web + gateway in dev mode |
 | `pnpm build`       | Production build                |
 | `pnpm check`       | Lint + types + format           |
@@ -149,15 +149,15 @@ Dashboard at **http://localhost:10254**, gateway at **http://localhost:10255**.
 
 ## Configuration
 
-All environment variables are optional for local development:
+The encryption key is required for manual development (the Docker image generates and persists one automatically). Google OAuth requires all three auth variables:
 
-| Variable                | Description                       | Default            |
-| ------------------------ | ---------------------------------- | ------------------- |
-| `DATABASE_URL`          | PostgreSQL connection string      | See `.env.example` |
-| `NEXTAUTH_SECRET`       | Enables Google OAuth (multi-user) | Single-user mode   |
-| `GOOGLE_CLIENT_ID`      | Google OAuth client ID            | —                  |
-| `GOOGLE_CLIENT_SECRET`  | Google OAuth client secret        | —                  |
-| `SECRET_ENCRYPTION_KEY` | AES-256-GCM encryption key        | Auto-generated      |
+| Variable                | Description                       | Default                                          |
+| ----------------------- | --------------------------------- | ------------------------------------------------ |
+| `DATABASE_URL`          | PostgreSQL connection string      | See `.env.example`                               |
+| `NEXTAUTH_SECRET`       | Enables Google OAuth (multi-user) | Single-user mode                                 |
+| `GOOGLE_CLIENT_ID`      | Google OAuth client ID            | —                                                |
+| `GOOGLE_CLIENT_SECRET`  | Google OAuth client secret        | —                                                |
+| `SECRET_ENCRYPTION_KEY` | AES-256-GCM encryption key        | Auto-generated in Docker; set manually otherwise |
 
 ## Contributing
 

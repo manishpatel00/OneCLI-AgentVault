@@ -49,7 +49,7 @@ else
 fi
 export AUTH_MODE
 OAUTH_CONFIGURED="false"
-if [ -n "$GOOGLE_CLIENT_ID" ]; then
+if [ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ]; then
   OAUTH_CONFIGURED="true"
 fi
 printf '{"authMode":"%s","oauthConfigured":%s}\n' "$AUTH_MODE" "$OAUTH_CONFIGURED" > /app/data/runtime-config.json

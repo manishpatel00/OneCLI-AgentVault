@@ -148,7 +148,6 @@ export const DashboardHeader = () => {
           <TooltipContent>GitHub</TooltipContent>
         </Tooltip>
 
-
         {onProjectPage && (
           <>
             <Separator

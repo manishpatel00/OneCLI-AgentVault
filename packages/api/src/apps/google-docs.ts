@@ -29,7 +29,8 @@ export const googleDocs: AppDefinition = {
       {
         scope: "https://www.googleapis.com/auth/drive.file",
         name: "Manage app documents",
-        description: "Create and edit documents opened or created by AgentVault",
+        description:
+          "Create and edit documents opened or created by AgentVault",
         access: "write",
       },
       {
