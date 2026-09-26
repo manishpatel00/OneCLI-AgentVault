@@ -19,8 +19,8 @@ export const BuildVersionCard = () => {
       <CardHeader>
         <CardTitle>Build version</CardTitle>
         <CardDescription>
-          The AgentVault version this instance is running. Include it when reporting
-          issues so behavior can be matched to a release.
+          The AgentVault version this instance is running. Include it when
+          reporting issues so behavior can be matched to a release.
         </CardDescription>
       </CardHeader>
       <CardContent>

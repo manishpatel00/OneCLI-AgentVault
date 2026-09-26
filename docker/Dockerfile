@@ -77,7 +77,6 @@ ENV FORCE_COLOR=0
 ENV PORT=10254
 ENV HOSTNAME="0.0.0.0"
 ENV AUTH_TRUST_HOST=true
-ENV NEXTAUTH_URL=http://localhost:10254
 
 # Build version read by the bundled gateway at runtime (empty → gateway falls back
 # to its compile-time crate version).

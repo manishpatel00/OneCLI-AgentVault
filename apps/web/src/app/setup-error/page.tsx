@@ -12,8 +12,8 @@ const errors: Record<string, { title: string; description: React.ReactNode }> =
       description: (
         <p>
           <Code>NEXTAUTH_SECRET</Code> is set but <Code>GOOGLE_CLIENT_ID</Code>{" "}
-          and <Code>GOOGLE_CLIENT_SECRET</Code> are missing. Either provide all
-          three or remove <Code>NEXTAUTH_SECRET</Code> to use local mode.
+          and <Code>GOOGLE_CLIENT_SECRET</Code> must be set together. Provide
+          all three for OAuth, or remove all three to use local mode.
         </p>
       ),
     },

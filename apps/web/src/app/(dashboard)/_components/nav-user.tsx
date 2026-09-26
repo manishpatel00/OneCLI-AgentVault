@@ -23,7 +23,7 @@ import {
 
 export const NavUser = () => {
   const { isMobile } = useSidebar();
-  const { user, signOut } = useAuth();
+  const { user, signOut, canSignOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
 
   const displayName = user?.name ?? user?.email ?? "User";
@@ -83,7 +83,11 @@ export const NavUser = () => {
               }}
             >
               {signingOut ? <Loader2 className="animate-spin" /> : <LogOut />}
-              {signingOut ? "Signing out..." : "Sign out"}
+              {signingOut
+                ? "Leaving..."
+                : canSignOut === false
+                  ? "Back to home"
+                  : "Sign out"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

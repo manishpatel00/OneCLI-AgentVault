@@ -17,9 +17,9 @@ npm install @agentvault-sh/sdk
 
 The orchestrator needs two env vars:
 
-| Variable         | Required | Description                                              |
-| ---------------- | -------- | -------------------------------------------------------- |
-| `ONECLI_API_KEY` | Yes      | User API key from AgentVault dashboard (`oc_...`)            |
+| Variable         | Required | Description                                                      |
+| ---------------- | -------- | ---------------------------------------------------------------- |
+| `ONECLI_API_KEY` | Yes      | User API key from AgentVault dashboard (`oc_...`)                |
 | `ONECLI_URL`     | No       | AgentVault instance URL. Defaults to `https://app.agentvault.sh` |
 
 For self-hosted: `ONECLI_URL=http://localhost:10254`

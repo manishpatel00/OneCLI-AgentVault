@@ -5,7 +5,15 @@ import {
   bootstrapOrganization,
   joinSharedOrganization,
 } from "@agentvault/api/services/organization-service";
-import { CAPS } from "@/lib/env";
+import {
+  CAPS,
+  IS_CLOUD,
+  NEXTAUTH_SECRET,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  SECRET_ENCRYPTION_KEY,
+} from "@/lib/env";
+import { checkAuthSetup } from "./setup-check";
 import { getAuthMode } from "./auth-mode";
 import type { AuthUser } from "./types";
 import { LOCAL_AUTH_ID, LOCAL_USER } from "./local-user";
@@ -59,7 +67,11 @@ const ensureLocalUser = (): Promise<void> => {
           if (CAPS.tenancy === "single-org-shared") {
             await joinSharedOrganization(user.id, LOCAL_USER.email);
           } else {
-            await bootstrapOrganization(user.id, LOCAL_USER.email, LOCAL_USER.name);
+            await bootstrapOrganization(
+              user.id,
+              LOCAL_USER.email,
+              LOCAL_USER.name,
+            );
           }
         }
       });
@@ -75,6 +87,20 @@ const ensureLocalUser = (): Promise<void> => {
 };
 
 export const getServerSessionImpl = async (): Promise<AuthUser | null> => {
+  // The UI setup page is not an API security boundary: API routes bypass the
+  // Next.js proxy matcher. Fail closed here too (including partial OAuth config).
+  if (
+    checkAuthSetup({
+      isCloud: IS_CLOUD,
+      nextAuthSecret: NEXTAUTH_SECRET,
+      googleClientId: GOOGLE_CLIENT_ID,
+      googleClientSecret: GOOGLE_CLIENT_SECRET,
+      encryptionKey: SECRET_ENCRYPTION_KEY,
+    })
+  ) {
+    return null;
+  }
+
   if (getAuthMode() === "local") {
     await ensureLocalUser();
     return LOCAL_USER;

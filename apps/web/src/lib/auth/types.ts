@@ -26,6 +26,8 @@ export interface AuthContextValue {
   user: AuthUser | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  /** False in unauthenticated local mode: going home does not revoke access. */
+  canSignOut?: boolean;
   // Email OTP flow (cloud-only, undefined in OSS mode)
   signUpWithEmail?: (email: string) => Promise<EmailOtpStep>;
   signInWithEmail?: (email: string) => Promise<EmailOtpStep>;
