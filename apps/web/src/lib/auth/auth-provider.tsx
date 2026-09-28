@@ -44,7 +44,7 @@ const LocalAuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 const OAuthInner = ({ children }: { children: ReactNode }) => {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [sessionTimedOut, setSessionTimedOut] = useState(false);
 
   useEffect(() => {
@@ -85,6 +85,7 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
         if (res?.error) {
           return { ok: false, error: res.error };
         }
+        await update();
         return { ok: true };
       } catch (err) {
         return {
@@ -94,7 +95,7 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
         };
       }
     },
-    [],
+    [update],
   );
 
   const signUpWithCredentials = useCallback(
@@ -110,6 +111,7 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
         if (res?.error) {
           return { ok: false, error: res.error };
         }
+        await update();
         return { ok: true };
       } catch (err) {
         return {
@@ -119,7 +121,7 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
         };
       }
     },
-    [],
+    [update],
   );
 
   const signOut = useCallback(async () => {
