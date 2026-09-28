@@ -109,6 +109,11 @@ export const authSessionRoutes = () => {
         select: { id: true, email: true, externalAuthId: true },
       });
 
+      const conflictingAuthIdUser = await db.user.findUnique({
+        where: { externalAuthId: user.id },
+        select: { id: true, email: true },
+      });
+
       if (existingUser && existingUser.externalAuthId !== user.id) {
         const decision = await _hooks.resolveIdentityConflict(
           existingUser,
@@ -117,6 +122,28 @@ export const authSessionRoutes = () => {
         if (decision === "reject") {
           return c.json({ error: IDENTITY_CONFLICT_ERROR }, 409);
         }
+
+        if (
+          conflictingAuthIdUser &&
+          conflictingAuthIdUser.id !== existingUser.id
+        ) {
+          await db.user.update({
+            where: { id: conflictingAuthIdUser.id },
+            data: {
+              externalAuthId: `stale-${conflictingAuthIdUser.id}-${Date.now()}`,
+            },
+          });
+        }
+      } else if (!existingUser && conflictingAuthIdUser) {
+        await db.user.update({
+          where: { id: conflictingAuthIdUser.id },
+          data: {
+            email: user.email,
+            name: user.name ?? undefined,
+            lastLoginAt: new Date(),
+            ...extra,
+          },
+        });
       }
 
       const dbUser = await db.user.upsert({
@@ -210,7 +237,11 @@ export const authSessionRoutes = () => {
         { err, route: "GET /v1/auth/session" },
         "session sync failed",
       );
-      return c.json({ error: "Internal server error" }, 500);
+      const message =
+        err instanceof Error && err.message
+          ? `Session sync failed: ${err.message}`
+          : "Internal server error";
+      return c.json({ error: message }, 500);
     }
   });
 
