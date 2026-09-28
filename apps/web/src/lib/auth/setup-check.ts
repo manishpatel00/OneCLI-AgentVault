@@ -3,7 +3,6 @@ export type SetupErrorCode = "oauth-misconfigured" | "missing-encryption-key";
 /** Never silently fall back to unauthenticated local mode when OAuth is half configured. */
 export const checkAuthSetup = ({
   isCloud,
-  nextAuthSecret,
   googleClientId,
   googleClientSecret,
   encryptionKey,
@@ -15,9 +14,10 @@ export const checkAuthSetup = ({
   encryptionKey: string;
 }): SetupErrorCode | null => {
   if (isCloud) return null;
+  // If one of Google Client ID or Secret is set without the other, OAuth is misconfigured
   if (
-    (nextAuthSecret || googleClientId || googleClientSecret) &&
-    !(nextAuthSecret && googleClientId && googleClientSecret)
+    (googleClientId || googleClientSecret) &&
+    !(googleClientId && googleClientSecret)
   ) {
     return "oauth-misconfigured";
   }

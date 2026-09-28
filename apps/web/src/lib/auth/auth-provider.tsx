@@ -73,12 +73,61 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
     await nextAuthSignIn("google");
   }, []);
 
+  const signInWithCredentials = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const res = await nextAuthSignIn("credentials", {
+          email,
+          password,
+          mode: "login",
+          redirect: false,
+        });
+        if (res?.error) {
+          return { ok: false, error: res.error };
+        }
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          error:
+            err instanceof Error ? err.message : "Invalid email or password",
+        };
+      }
+    },
+    [],
+  );
+
+  const signUpWithCredentials = useCallback(
+    async (email: string, password: string, name?: string) => {
+      try {
+        const res = await nextAuthSignIn("credentials", {
+          email,
+          password,
+          name,
+          mode: "signup",
+          redirect: false,
+        });
+        if (res?.error) {
+          return { ok: false, error: res.error };
+        }
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          error:
+            err instanceof Error ? err.message : "Failed to create account",
+        };
+      }
+    },
+    [],
+  );
+
   const signOut = useCallback(async () => {
     await nextAuthSignOut({ callbackUrl: "/auth/login" });
   }, []);
 
   const authError = sessionTimedOut
-    ? "Authentication service is taking longer than expected. Check AUTH_SECRET, GOOGLE_CLIENT_ID, and GOOGLE_CLIENT_SECRET in your deployment environment."
+    ? "Authentication service is taking longer than expected. Check your connection or retry."
     : null;
 
   const value = useMemo<AuthContextValue>(
@@ -88,10 +137,21 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
       user,
       canSignOut: true,
       signIn,
+      signInWithCredentials,
+      signUpWithCredentials,
       signOut,
       authError,
     }),
-    [status, user, signIn, signOut, sessionTimedOut, authError],
+    [
+      status,
+      user,
+      signIn,
+      signInWithCredentials,
+      signUpWithCredentials,
+      signOut,
+      sessionTimedOut,
+      authError,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -100,13 +160,12 @@ const OAuthInner = ({ children }: { children: ReactNode }) => {
 export const AuthProviderImpl = ({
   children,
   authMode,
-  oauthConfigured,
 }: {
   children: ReactNode;
   authMode: AuthMode;
-  oauthConfigured: boolean;
+  oauthConfigured?: boolean;
 }) => {
-  if (authMode === "local" || !oauthConfigured) {
+  if (authMode === "local") {
     return <LocalAuthProvider>{children}</LocalAuthProvider>;
   }
 

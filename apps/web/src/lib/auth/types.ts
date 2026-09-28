@@ -32,7 +32,15 @@ export interface AuthContextValue {
   signUpWithEmail?: (email: string) => Promise<EmailOtpStep>;
   signInWithEmail?: (email: string) => Promise<EmailOtpStep>;
   confirmEmailSignUp?: (email: string, code: string) => Promise<boolean>;
-  confirmEmailSignIn?: (code: string) => Promise<boolean>;
+  signInWithCredentials?: (
+    email: string,
+    password: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
+  signUpWithCredentials?: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
   // Enterprise SSO redirect (cloud-only, undefined in OSS mode)
   signInWithSso?: (provider: string) => Promise<void>;
   // Last federated sign-in failure (e.g. an org IdP misconfiguration),

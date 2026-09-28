@@ -10,8 +10,16 @@ const valid = {
   encryptionKey: "key",
 };
 
-test("local and fully configured OAuth modes are accepted", () => {
+test("local, email credentials, and fully configured OAuth modes are accepted", () => {
   assert.equal(checkAuthSetup(valid), null);
+  assert.equal(
+    checkAuthSetup({
+      ...valid,
+      googleClientId: "",
+      googleClientSecret: "",
+    }),
+    null,
+  );
   assert.equal(
     checkAuthSetup({
       ...valid,
@@ -23,19 +31,13 @@ test("local and fully configured OAuth modes are accepted", () => {
   );
 });
 
-test("partial OAuth configuration fails closed rather than enabling local mode", () => {
-  for (const field of [
-    "nextAuthSecret",
-    "googleClientId",
-    "googleClientSecret",
-  ]) {
-    assert.equal(
-      checkAuthSetup({ ...valid, [field]: "" }),
-      "oauth-misconfigured",
-    );
-  }
+test("partial OAuth configuration fails closed rather than enabling broken OAuth", () => {
   assert.equal(
-    checkAuthSetup({ ...valid, nextAuthSecret: "", googleClientSecret: "" }),
+    checkAuthSetup({ ...valid, googleClientId: "" }),
+    "oauth-misconfigured",
+  );
+  assert.equal(
+    checkAuthSetup({ ...valid, googleClientSecret: "" }),
     "oauth-misconfigured",
   );
 });

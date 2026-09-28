@@ -219,6 +219,7 @@ model User {
   id                    String    @id @default(uuid())
   email                 String    @unique
   name                  String?
+  passwordHash          String?   @map("password_hash")
   // Cloud-only (inert in OSS): the SCIM `name` object (formatted/givenName/
   // familyName/…) stored losslessly so IdP-provisioned attributes round-trip;
   // `name` above stays the display string.
