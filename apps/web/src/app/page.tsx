@@ -15,7 +15,6 @@ import {
   Moon,
   Copy,
   Terminal,
-  Sparkles,
   Cpu,
   Github,
 } from "lucide-react";
@@ -171,7 +170,6 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
               </span>
               <span className="text-border">|</span>
               <span>The Privacy-First Credential Gateway</span>
-              <Sparkles className="size-3 text-amber-500" />
             </div>
 
             <h1 className="text-5xl font-extrabold sm:text-6xl lg:text-7xl mb-6 leading-[1.14] tracking-tight text-foreground text-balance">
