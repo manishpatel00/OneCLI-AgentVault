@@ -155,10 +155,9 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden pt-20 pb-24 lg:pt-28 lg:pb-32">
+        <section className="relative overflow-hidden pt-20 pb-24 lg:pt-28 lg:pb-32 bg-math-grid">
           {/* Subtle Ambient Radial Glow */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[600px] bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(16,185,129,0.12),transparent_70%)] dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(16,185,129,0.18),transparent_70%)]" />
-          <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
 
           <div className="container relative mx-auto max-w-6xl px-4 text-center">
             {/* Version / Feature Badge */}
@@ -171,15 +170,15 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
               <span>The Privacy-First Credential Gateway</span>
             </div>
 
-            <h1 className="text-5xl font-extrabold sm:text-6xl lg:text-7xl mb-6 leading-[1.14] tracking-tight text-foreground text-balance">
+            <h1 className="text-5xl font-extrabold sm:text-6xl lg:text-7xl mb-6 leading-[1.12] tracking-tight text-foreground text-balance">
               The credential gateway <br className="hidden sm:block" />
               for AI agents
             </h1>
 
-            <p className="mx-auto max-w-2xl text-lg sm:text-xl text-muted-foreground mb-10 leading-relaxed text-balance">
-              Route every request through AgentVault. Enforce granular policies,
-              inject credentials at the network layer. Keys never touch the
-              agent.
+            <p className="mx-auto max-w-2xl text-lg sm:text-xl text-muted-foreground mb-12 leading-relaxed text-balance">
+              Route every request through AgentVault.{" "}
+              <br className="hidden sm:block" />
+              Enforce policies, inject credentials. Keys never leave the vault.
             </p>
 
             {/* Code Mockup Card */}
@@ -750,8 +749,11 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
         {/* Ecosystem Video Section */}
         <section id="product" className="py-24 bg-muted/10 border-t">
           <div className="container mx-auto max-w-6xl px-4 text-center">
-            <h2 className="text-4xl font-bold tracking-tight mb-4">
-              Every agent. <span className="text-brand">One gateway.</span>
+            <span className="text-emerald-500 dark:text-emerald-400 font-extrabold text-2xl sm:text-3xl block mb-1">
+              Every Agent.
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-foreground">
+              One Unified Gateway
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-16">
               Scoped credentials injected per request. Agents never hold a real
@@ -771,8 +773,11 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
         <section className="py-24 bg-background">
           <div className="container mx-auto max-w-6xl px-4">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-                Rules agents can&apos;t break
+              <span className="text-emerald-500 dark:text-emerald-400 font-extrabold text-2xl sm:text-3xl block mb-1">
+                Network Shield
+              </span>
+              <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl mb-4 text-foreground">
+                Rules Agents Can&apos;t Break
               </h2>
               <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
                 Prompts are suggestions. AgentVault policies are enforced at the

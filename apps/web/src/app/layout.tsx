@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { Source_Serif_4 } from "next/font/google";
+import { Source_Serif_4, Plus_Jakarta_Sans, Caveat } from "next/font/google";
 import "@agentvault/ui/globals.css";
 import "./globals.css";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -22,6 +22,16 @@ const geistMono = localFont({
 const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
   variable: "--font-serif",
+});
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-handwriting",
+  display: "swap",
 });
 
 // Auth mode is determined at runtime from /app/data/runtime-config.json
@@ -61,7 +71,7 @@ export default function RootLayout({
         </head>
       )}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable}`}
+        className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${plusJakarta.variable} ${caveat.variable} font-sans`}
         suppressHydrationWarning
       >
         <AuthProvider authMode={authMode} oauthConfigured={oauthConfigured}>
