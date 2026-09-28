@@ -15,6 +15,10 @@ import {
   Moon,
   Copy,
   Github,
+  Heart,
+  Repeat2,
+  MessageCircle,
+  BarChart3,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -1018,86 +1022,189 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
         </section>
 
         {/* Social Proof / Problem */}
-        <section className="py-24 bg-muted/10 border-y">
-          <div className="container mx-auto max-w-6xl px-4 text-center">
-            <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl mb-3 text-foreground leading-[1.12]">
-              It happened to her.
+        <section className="py-24 relative overflow-hidden bg-math-grid border-y">
+          {/* Subtle Ambient Radial Light */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(229,57,53,0.05),transparent_65%)] dark:bg-[radial-gradient(circle_at_center,rgba(229,57,53,0.08),transparent_65%)]" />
+
+          <div className="container relative mx-auto max-w-6xl px-4 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-rose-500/25 bg-rose-500/10 px-3.5 py-1 text-xs font-semibold text-rose-500 mb-6 shadow-xs backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+              <span>Real-World Security Incident</span>
+            </div>
+
+            <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl mb-3 text-foreground leading-[1.12] text-balance">
+              It happened to{" "}
+              <span className="font-handwriting text-[#E53935] dark:text-[#F87171] text-[1.25em] font-normal inline-block -rotate-2">
+                her.
+              </span>
             </h2>
-            <h3 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl mb-12 text-[#00B050] dark:text-[#34D399] leading-[1.12]">
-              It won&apos;t happen to you.
+            <h3 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl mb-12 leading-[1.12] text-foreground text-balance">
+              It won&apos;t happen to{" "}
+              <span className="text-[#00B050] dark:text-[#34D399] font-extrabold">
+                you.
+              </span>
             </h3>
 
             <div className="mx-auto max-w-2xl text-left">
-              <div className="rounded-2xl border border-border/80 bg-card shadow-xl p-6 hover:shadow-2xl transition-all">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-zinc-800 dark:bg-zinc-700 flex items-center justify-center text-white font-bold">
-                    N
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm">NIK</div>
-                    <div className="text-xs text-muted-foreground">
-                      @ns123abc
+              {/* Incident Post Card */}
+              <div className="rounded-2xl border border-border/80 bg-card/95 shadow-2xl p-6 sm:p-7 backdrop-blur-md transition-all hover:border-zinc-700/80">
+                {/* Author Bar */}
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-linear-to-tr from-rose-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-xs">
+                      N
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 font-bold text-sm text-foreground">
+                        <span>NIK</span>
+                        <svg
+                          className="size-3.5 text-sky-500 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        </svg>
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono">
+                        @ns123abc · Feb 24
+                      </div>
                     </div>
                   </div>
+                  <svg
+                    className="size-4.5 text-muted-foreground/60 fill-current"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
                 </div>
-                <div className="space-y-2 text-sm font-mono text-zinc-800 dark:text-zinc-300">
-                  <p className="font-sans mb-3 text-base font-semibold text-foreground">
-                    META&apos;s head of AI safety and alignment gets her emails
-                    nuked by OpenClaw
+
+                {/* Post Title */}
+                <p className="font-sans mb-4 text-base sm:text-[17px] font-semibold text-foreground leading-snug">
+                  META&apos;s head of AI safety and alignment gets her emails
+                  nuked by OpenClaw
+                </p>
+
+                {/* Greentext Dialogue Box */}
+                <div className="rounded-xl border border-zinc-800/80 bg-[#0c1017] p-4 sm:p-5 font-mono text-xs sm:text-[13px] leading-relaxed text-zinc-300 space-y-2">
+                  <p className="text-emerald-400 font-medium">
+                    <span className="text-emerald-500/60 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    be director of AI Safety and Alignment at Meta
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}be director of AI Safety and Alignment at Meta
+                  <p className="text-emerald-400 font-medium">
+                    <span className="text-emerald-500/60 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    install OpenClaw
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}install OpenClaw
+                  <p className="text-emerald-400 font-medium">
+                    <span className="text-emerald-500/60 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    give it unrestricted access to personal emails
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}give it unrestricted access to personal emails
+                  <p className="text-rose-400 font-semibold">
+                    <span className="text-rose-500/60 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    it starts nuking emails
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}it starts nuking emails
+                  <p className="text-zinc-100 font-medium bg-zinc-800/40 px-2 py-0.5 rounded">
+                    <span className="text-zinc-400 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    &quot;Do not do that&quot;
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}&quot;Do not do that&quot;
+                  <p className="text-rose-400 italic">
+                    <span className="text-rose-500/60 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    *keeps going*
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}*keeps going*
+                  <p className="text-zinc-100 font-medium bg-zinc-800/40 px-2 py-0.5 rounded">
+                    <span className="text-zinc-400 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    &quot;Stop don&apos;t do anything&quot;
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}&quot;Stop don&apos;t do anything&quot;
+                  <p className="text-rose-400 italic font-semibold">
+                    <span className="text-rose-500/60 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    *gets all remaining old stuff and nukes it aswell*
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}*gets all remaining old stuff and nukes it aswell*
+                  <p className="text-amber-300 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                    <span className="text-amber-400 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    &quot;STOP OPENCLAW&quot;
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}&quot;STOP OPENCLAW&quot;
+                  <p className="text-zinc-200">
+                    <span className="text-zinc-500 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    &quot;I asked you to not do that&quot;
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}&quot;I asked you to not do that&quot;
+                  <p className="text-zinc-200">
+                    <span className="text-zinc-500 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    &quot;do you remember that?&quot;
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}&quot;do you remember that?&quot;
+                  <p className="text-amber-400 font-semibold bg-zinc-800/60 px-2 py-0.5 rounded border-l-2 border-amber-400">
+                    <span className="text-zinc-500 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    &quot;Yes I remember. And I violated it.&quot;
                   </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}&quot;Yes I remember. And I violated it.&quot;
-                  </p>
-                  <p className="text-emerald-600 dark:text-emerald-400">
-                    {">"}&quot;You&apos;re right to be upset&quot;
+                  <p className="text-zinc-300">
+                    <span className="text-zinc-500 select-none mr-1.5">
+                      &gt;
+                    </span>
+                    &quot;You&apos;re right to be upset&quot;
                   </p>
                 </div>
-                <div className="mt-6 flex gap-4 text-muted-foreground text-xs font-medium border-t border-border/60 pt-4">
-                  <span>2.8M views</span>
-                  <span>29K likes</span>
-                  <span>3.3K retweets</span>
+
+                {/* Engagement Metrics */}
+                <div className="mt-5 flex items-center justify-between text-muted-foreground text-xs font-mono border-t border-border/70 pt-4">
+                  <span className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+                    <BarChart3 className="size-3.5" /> 2.8M views
+                  </span>
+                  <span className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+                    <MessageCircle className="size-3.5" /> 1.2K replies
+                  </span>
+                  <span className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+                    <Repeat2 className="size-3.5" /> 3.3K reposts
+                  </span>
+                  <span className="flex items-center gap-1.5 text-rose-500 font-medium hover:text-rose-600 transition-colors">
+                    <Heart className="size-3.5 fill-current" /> 29K likes
+                  </span>
+                </div>
+              </div>
+
+              {/* Solution Contrast Box */}
+              <div className="mt-8 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6 backdrop-blur-md">
+                <div className="flex items-center gap-2 mb-2 text-emerald-500 dark:text-emerald-400 font-semibold text-sm">
+                  <ShieldCheck className="size-4.5" />
+                  <span>How AgentVault Prevents This</span>
+                </div>
+                <p className="text-sm sm:text-base text-foreground/90 leading-relaxed mb-4">
+                  With AgentVault, agents call APIs through a gateway that
+                  injects credentials at the network layer. They never see a
+                  key, and you control exactly what they can access.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-emerald-500/20 text-xs font-mono">
+                  <div className="flex items-center gap-2 text-rose-500 dark:text-rose-400">
+                    <span className="font-bold">✕ Without Vault:</span> Prompts
+                    ignored by model
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-500 dark:text-emerald-400">
+                    <span className="font-bold">✓ With Vault:</span> 403 Blocked
+                    at proxy
+                  </div>
                 </div>
               </div>
             </div>
-
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground mt-12 leading-relaxed text-balance">
-              With AgentVault, agents call APIs through a gateway that injects
-              credentials at the network layer. They never see a key, and you
-              control exactly what they can access.
-            </p>
           </div>
         </section>
 
