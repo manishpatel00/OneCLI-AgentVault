@@ -14,7 +14,6 @@ import {
   Sun,
   Moon,
   Copy,
-  Terminal,
   Github,
 } from "lucide-react";
 import Image from "next/image";
@@ -189,28 +188,31 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
             </p>
 
             {/* Code Mockup Card */}
-            <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-border/70 bg-card shadow-2xl mb-12 transition-all hover:border-border">
-              <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1.5">
-                    <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                    <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-                    <div className="h-3 w-3 rounded-full bg-green-500/80" />
+            <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#0d1219] text-zinc-300 shadow-2xl mb-12 transition-all hover:border-zinc-700/80">
+              {/* Terminal Titlebar */}
+              <div className="flex items-center justify-between border-b border-zinc-800/80 bg-[#111622]/90 px-4 py-3 sm:px-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-[#ff5f56]" />
+                    <div className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
+                    <div className="h-3 w-3 rounded-full bg-[#27c93f]" />
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground font-mono ml-2">
-                    <Terminal className="size-3.5" />
-                    .env — proxied by agentvault
+                  <div className="flex items-center gap-2 text-xs sm:text-sm font-mono ml-1 text-zinc-400">
+                    <span className="text-zinc-500 font-bold select-none">
+                      &gt;_
+                    </span>
+                    <span>.env — proxied by agentvault</span>
                   </div>
                 </div>
                 <button
                   onClick={handleCopy}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors cursor-pointer"
                   aria-label="Copy code"
                 >
                   {copied ? (
                     <>
-                      <Check className="size-3.5 text-emerald-500" />
-                      <span className="text-emerald-500 font-medium">
+                      <Check className="size-3.5 text-emerald-400" />
+                      <span className="text-emerald-400 font-medium">
                         Copied!
                       </span>
                     </>
@@ -222,79 +224,97 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
                   )}
                 </button>
               </div>
-              <div className="p-5 text-left font-mono text-sm sm:text-base bg-[#0d1117] text-zinc-300 overflow-x-auto">
-                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
-                  <span>
-                    <span className="text-[#79c0ff]">OPENAI_API_KEY</span>
-                    =sk-proj-Xh4mQ2████████f8Kw
-                  </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded">
-                    <Check className="h-3 w-3" /> agentvault-managed
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
-                  <span>
-                    <span className="text-[#79c0ff]">STRIPE_SECRET_KEY</span>
-                    =sk_live_51Hx8m████████Rq2v
-                  </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded opacity-0 transition-opacity group-hover:opacity-100">
-                    <Check className="h-3 w-3" /> agentvault-managed
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
-                  <span>
-                    <span className="text-[#79c0ff]">GITHUB_TOKEN</span>
-                    =ghp_uV4nR7Tk████████p3Xz
-                  </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded">
-                    <Check className="h-3 w-3" /> agentvault-managed
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
-                  <span>
-                    <span className="text-[#79c0ff]">
-                      AWS_SECRET_ACCESS_KEY
-                    </span>
-                    =aK9dPmXw████████L7Rq
-                  </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded opacity-0 transition-opacity group-hover:opacity-100">
-                    <Check className="h-3 w-3" /> agentvault-managed
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
-                  <span>
-                    <span className="text-[#79c0ff]">DATABASE_URL</span>
-                    =postgres://acme:pg4s█████@db.acme.io
-                  </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded opacity-0 transition-opacity group-hover:opacity-100">
-                    <Check className="h-3 w-3" /> agentvault-managed
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
-                  <span>
-                    <span className="text-[#79c0ff]">SLACK_BOT_TOKEN</span>
-                    =xoxb-8214-Ju7wK████████m2Np
-                  </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded opacity-0 transition-opacity group-hover:opacity-100">
-                    <Check className="h-3 w-3" /> agentvault-managed
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
-                  <span>
-                    <span className="text-[#79c0ff]">ANTHROPIC_API_KEY</span>
-                    =sk-ant-api03-R5kT████████v8Nq
-                  </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded">
-                    <Check className="h-3 w-3" /> agentvault-managed
-                  </span>
-                </div>
+
+              {/* Terminal Body */}
+              <div className="p-4 sm:p-6 text-left font-mono text-xs sm:text-sm bg-[#0d1219] overflow-x-auto space-y-3">
+                {[
+                  {
+                    key: "OPENAI_API_KEY",
+                    prefix: "sk-proj-Xh4mQ2",
+                    suffix: "f8Kw",
+                    managed: true,
+                  },
+                  {
+                    key: "STRIPE_SECRET_KEY",
+                    prefix: "sk_live_51Hx8m",
+                    suffix: "Rq2v",
+                    managed: false,
+                  },
+                  {
+                    key: "GITHUB_TOKEN",
+                    prefix: "ghp_uV4nR7Tk",
+                    suffix: "p3Xz",
+                    managed: true,
+                  },
+                  {
+                    key: "AWS_SECRET_ACCESS_KEY",
+                    prefix: "aK9dPmXw",
+                    suffix: "L7Rq",
+                    managed: false,
+                  },
+                  {
+                    key: "DATABASE_URL",
+                    prefix: "postgres://acme:pg4s",
+                    suffix: "@db.acme.io",
+                    managed: false,
+                  },
+                  {
+                    key: "SLACK_BOT_TOKEN",
+                    prefix: "xoxb-8214-Ju7wK",
+                    suffix: "m2Np",
+                    managed: false,
+                  },
+                  {
+                    key: "ANTHROPIC_API_KEY",
+                    prefix: "sk-ant-api03-R5kT",
+                    suffix: "v8Nq",
+                    managed: true,
+                  },
+                ].map((row) => (
+                  <div
+                    key={row.key}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between py-1 px-2 rounded-md hover:bg-zinc-800/30 transition-colors group gap-1 sm:gap-4"
+                  >
+                    <div className="flex items-center flex-wrap gap-0.5 font-mono text-zinc-100">
+                      <span className="text-[#38bdf8] font-bold tracking-tight">
+                        {row.key}
+                      </span>
+                      <span className="text-zinc-400">=</span>
+                      <span className="text-zinc-100 font-medium">
+                        {row.prefix}
+                      </span>
+                      <span
+                        className="inline-block h-3.5 sm:h-4 w-20 sm:w-24 rounded-xs bg-[#c9d1d9] mx-1 align-middle select-none shadow-xs"
+                        aria-hidden="true"
+                      />
+                      <span className="text-zinc-100 font-medium">
+                        {row.suffix}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center">
+                      <span
+                        className={`text-[#22c55e] text-xs font-mono font-medium flex items-center gap-1.5 bg-[#062c19]/90 border border-[#1b6b3e]/60 px-2.5 py-0.5 rounded-md shadow-xs transition-opacity ${
+                          row.managed
+                            ? "opacity-100"
+                            : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
+                        <Check className="size-3 text-[#22c55e] stroke-[2.5]" />
+                        <span>agentvault-managed</span>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Terminal Footer */}
                 <div className="mt-4 pt-4 border-t border-zinc-800/80 text-zinc-400 flex flex-col sm:flex-row justify-between items-center gap-2">
-                  <span className="text-xs">
+                  <span className="text-xs sm:text-sm font-mono text-zinc-400">
                     Ready for Cursor, Claude Code, LangChain &amp; n8n
                   </span>
-                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="size-3.5" /> 0 secrets exposed to
-                    models
+                  <span className="text-[#00ff88] text-xs sm:text-sm font-mono font-semibold flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4 text-[#00ff88]" />
+                    <span>0 secrets exposed to models</span>
                   </span>
                 </div>
               </div>
