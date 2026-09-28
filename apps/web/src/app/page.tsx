@@ -900,119 +900,143 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
         </section>
 
         {/* What teams build with AgentVault */}
-        <section className="py-24 bg-muted/10 border-y">
-          <div className="container mx-auto max-w-6xl px-4">
+        <section className="py-24 relative overflow-hidden bg-math-grid border-y">
+          {/* Subtle Ambient Radial Glow */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.06),transparent_65%)] dark:bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.09),transparent_65%)]" />
+
+          <div className="container relative mx-auto max-w-6xl px-4">
             <div className="text-center mb-16">
-              <p className="text-sm font-semibold tracking-widest uppercase text-muted-foreground mb-4">
-                What teams build with AgentVault
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-4 shadow-xs backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Production Use Cases</span>
+              </div>
+              <h2 className="text-3xl font-extrabold sm:text-4xl lg:text-5xl tracking-tight text-foreground text-balance mb-4 leading-[1.15]">
+                What teams build with{" "}
+                <span className="text-[#00B050] dark:text-[#34D399]">
+                  AgentVault
+                </span>
+              </h2>
+              <p className="mx-auto max-w-2xl text-base sm:text-lg text-muted-foreground leading-relaxed text-balance">
+                From solo developers pairing with Cursor to engineering
+                organizations running autonomous multi-agent pipelines.
               </p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 max-w-5xl mx-auto">
-              {/* Coding Agents */}
-              <div className="rounded-xl border bg-card p-8 shadow-sm">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand">
+              {/* 1. Coding Agents */}
+              <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-[#0c1017] p-8 shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-emerald-500/40 backdrop-blur-sm">
+                <div className="pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full bg-emerald-500/5 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
+                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
                   <Code2 className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Coding Agents</h3>
-                <p className="text-muted-foreground mb-6">
+                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
+                  Coding Agents
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
                   Your Cursor or Claude agent pushes to GitHub, creates Jira
                   tickets, and deploys to Vercel, all through AgentVault&apos;s
                   gateway. Credentials injected, never exposed.
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     GITHUB
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     JIRA
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     VERCEL
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     LINEAR
                   </span>
                 </div>
               </div>
 
-              {/* Autonomous Workflows */}
-              <div className="rounded-xl border bg-card p-8 shadow-sm">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand">
+              {/* 2. Autonomous Workflows */}
+              <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-[#0c1017] p-8 shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-emerald-500/40 backdrop-blur-sm">
+                <div className="pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full bg-emerald-500/5 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
+                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
                   <Link2 className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Autonomous Workflows</h3>
-                <p className="text-muted-foreground mb-6">
+                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
+                  Autonomous Workflows
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
                   n8n, Dify, or custom pipelines call Slack, Google Calendar,
                   and Stripe APIs. AgentVault injects OAuth tokens per-request.
                   Revoke access instantly.
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     SLACK
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     GOOGLE CALENDAR
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     STRIPE
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     GMAIL
                   </span>
                 </div>
               </div>
 
-              {/* Team Governance */}
-              <div className="rounded-xl border bg-card p-8 shadow-sm">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand">
+              {/* 3. Team Governance */}
+              <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-[#0c1017] p-8 shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-emerald-500/40 backdrop-blur-sm">
+                <div className="pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full bg-emerald-500/5 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
+                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
                   <Users className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Team Governance</h3>
-                <p className="text-muted-foreground mb-6">
+                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
+                  Team Governance
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
                   10 agents across 3 projects. Rate limits on the Slack API,
                   approval rules for payment endpoints, full audit logs. One
                   dashboard.
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     MULTI-AGENT
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     RATE LIMITS
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     APPROVALS
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     AUDIT LOGS
                   </span>
                 </div>
               </div>
 
-              {/* Security & Compliance */}
-              <div className="rounded-xl border bg-card p-8 shadow-sm">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand">
+              {/* 4. Security & Compliance */}
+              <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-[#0c1017] p-8 shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-emerald-500/40 backdrop-blur-sm">
+                <div className="pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full bg-emerald-500/5 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
+                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">
+                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
                   Security &amp; Compliance
                 </h3>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
                   Show exactly which agent called which API, when, and what
                   credentials were used. No keys in logs, no keys in prompts.
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     SOC 2
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     AUDIT TRAIL
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     REVOCATION
                   </span>
-                  <span className="rounded-md border px-3 py-1 text-xs font-mono font-medium text-muted-foreground">
+                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     ZERO-TRUST
                   </span>
                 </div>
