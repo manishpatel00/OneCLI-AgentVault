@@ -900,9 +900,17 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
         </section>
 
         {/* What teams build with AgentVault */}
-        <section className="py-24 relative overflow-hidden bg-math-grid border-y">
-          {/* Subtle Ambient Radial Glow */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.06),transparent_65%)] dark:bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.09),transparent_65%)]" />
+        <section className="py-28 relative overflow-hidden bg-background border-y border-border/80">
+          {/* High-Definition Math Grid with Smooth Radial Vignette Mask */}
+          <div className="pointer-events-none absolute inset-0 bg-math-grid opacity-75 dark:opacity-40 [mask-image:radial-gradient(ellipse_85%_70%_at_50%_50%,black_45%,transparent_100%)]" />
+
+          {/* Dual Ambient Dynamic Radial Glow Orbs */}
+          <div className="pointer-events-none absolute -left-48 top-1/4 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.15),transparent_70%)] blur-3xl dark:bg-[radial-gradient(circle,rgba(16,185,129,0.2),transparent_70%)]" />
+          <div className="pointer-events-none absolute -right-48 bottom-1/4 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(14,165,233,0.12),transparent_70%)] blur-3xl dark:bg-[radial-gradient(circle,rgba(14,165,233,0.16),transparent_70%)]" />
+
+          {/* Smooth Top & Bottom Section Blend Fades */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-background via-background/60 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-background via-background/60 to-transparent" />
 
           <div className="container relative mx-auto max-w-6xl px-4">
             <div className="text-center mb-16">
@@ -924,9 +932,10 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
 
             <div className="grid gap-6 md:grid-cols-2 max-w-5xl mx-auto">
               {/* 1. Coding Agents */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-[#0c1017] p-8 shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-emerald-500/40 backdrop-blur-sm">
-                <div className="pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full bg-emerald-500/5 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
-                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
+              <div className="group relative overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-8 sm:p-9 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/[0.04] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-500 group-hover:bg-emerald-500/20 group-hover:scale-125" />
+                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
                   <Code2 className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
@@ -937,7 +946,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
                   tickets, and deploys to Vercel, all through AgentVault&apos;s
                   gateway. Credentials injected, never exposed.
                 </p>
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60">
                   <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     GITHUB
                   </span>
@@ -954,9 +963,10 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
               </div>
 
               {/* 2. Autonomous Workflows */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-[#0c1017] p-8 shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-emerald-500/40 backdrop-blur-sm">
-                <div className="pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full bg-emerald-500/5 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
-                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
+              <div className="group relative overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-8 sm:p-9 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/[0.04] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-500 group-hover:bg-emerald-500/20 group-hover:scale-125" />
+                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
                   <Link2 className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
@@ -967,7 +977,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
                   and Stripe APIs. AgentVault injects OAuth tokens per-request.
                   Revoke access instantly.
                 </p>
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60">
                   <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     SLACK
                   </span>
@@ -984,9 +994,10 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
               </div>
 
               {/* 3. Team Governance */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-[#0c1017] p-8 shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-emerald-500/40 backdrop-blur-sm">
-                <div className="pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full bg-emerald-500/5 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
-                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
+              <div className="group relative overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-8 sm:p-9 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/[0.04] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-500 group-hover:bg-emerald-500/20 group-hover:scale-125" />
+                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
                   <Users className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
@@ -997,7 +1008,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
                   approval rules for payment endpoints, full audit logs. One
                   dashboard.
                 </p>
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60">
                   <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     MULTI-AGENT
                   </span>
@@ -1014,9 +1025,10 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
               </div>
 
               {/* 4. Security & Compliance */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-[#0c1017] p-8 shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-emerald-500/40 backdrop-blur-sm">
-                <div className="pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full bg-emerald-500/5 blur-2xl transition-all duration-500 group-hover:bg-emerald-500/15" />
-                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
+              <div className="group relative overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-8 sm:p-9 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/[0.04] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-500 group-hover:bg-emerald-500/20 group-hover:scale-125" />
+                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
@@ -1026,7 +1038,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
                   Show exactly which agent called which API, when, and what
                   credentials were used. No keys in logs, no keys in prompts.
                 </p>
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60">
                   <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
                     SOC 2
                   </span>
