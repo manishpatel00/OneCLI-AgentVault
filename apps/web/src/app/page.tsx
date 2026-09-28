@@ -972,15 +972,15 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
         {/* Social Proof / Problem */}
         <section className="py-24 bg-muted/10 border-y">
           <div className="container mx-auto max-w-6xl px-4 text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-2">
+            <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl mb-3 text-foreground leading-[1.12]">
               It happened to her.
             </h2>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-12 text-brand">
+            <h3 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl mb-12 text-[#00B050] dark:text-[#34D399] leading-[1.12]">
               It won&apos;t happen to you.
-            </h2>
+            </h3>
 
             <div className="mx-auto max-w-2xl text-left">
-              <div className="rounded-xl border bg-card shadow-lg p-6 hover:shadow-xl transition-shadow">
+              <div className="rounded-2xl border border-border/80 bg-card shadow-xl p-6 hover:shadow-2xl transition-all">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-10 w-10 rounded-full bg-zinc-800 dark:bg-zinc-700 flex items-center justify-center text-white font-bold">
                     N
@@ -993,7 +993,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
                   </div>
                 </div>
                 <div className="space-y-2 text-sm font-mono text-zinc-800 dark:text-zinc-300">
-                  <p className="font-sans mb-3 text-base font-medium">
+                  <p className="font-sans mb-3 text-base font-semibold text-foreground">
                     META&apos;s head of AI safety and alignment gets her emails
                     nuked by OpenClaw
                   </p>
@@ -1037,7 +1037,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
                     {">"}&quot;You&apos;re right to be upset&quot;
                   </p>
                 </div>
-                <div className="mt-6 flex gap-4 text-muted-foreground text-xs font-medium border-t pt-4">
+                <div className="mt-6 flex gap-4 text-muted-foreground text-xs font-medium border-t border-border/60 pt-4">
                   <span>2.8M views</span>
                   <span>29K likes</span>
                   <span>3.3K retweets</span>
@@ -1045,7 +1045,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
               </div>
             </div>
 
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground mt-12">
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground mt-12 leading-relaxed text-balance">
               With AgentVault, agents call APIs through a gateway that injects
               credentials at the network layer. They never see a key, and you
               control exactly what they can access.
@@ -1054,26 +1054,29 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
         </section>
 
         {/* CTA Section */}
-        <section id="pricing" className="py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-brand/5" />
+        <section
+          id="pricing"
+          className="py-28 relative overflow-hidden bg-math-grid border-t"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.12),transparent_70%)] dark:bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.16),transparent_70%)]" />
           <div className="container relative mx-auto max-w-4xl px-4 text-center">
-            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
+            <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl mb-6 text-foreground leading-[1.12] text-balance">
               Start securing your agents today
             </h2>
-            <p className="text-xl text-muted-foreground mb-10">
+            <p className="text-lg sm:text-xl text-muted-foreground mb-10 leading-relaxed text-balance">
               Free forever for up to 2 agents. No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/auth/login"
-                className="inline-flex h-14 w-full sm:w-auto items-center justify-center rounded-md bg-brand px-10 text-lg font-medium text-primary-foreground shadow transition-colors hover:bg-brand/90"
+                className="inline-flex h-13 w-full sm:w-auto items-center justify-center rounded-xl bg-brand px-10 text-base font-semibold text-primary-foreground shadow-sm transition-all hover:bg-brand/90 hover:shadow-md hover:scale-[1.02]"
               >
                 Get Started
               </Link>
               <Link
                 href="https://github.com/manishpatel00/Onecli-AgentVault#readme"
                 target="_blank"
-                className="inline-flex h-14 w-full sm:w-auto items-center justify-center rounded-md border border-input bg-background px-10 text-lg font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="inline-flex h-13 w-full sm:w-auto items-center justify-center rounded-xl border border-input bg-card/60 px-10 text-base font-semibold text-foreground shadow-xs transition-all hover:bg-accent hover:text-accent-foreground hover:scale-[1.02]"
               >
                 Read the Docs
               </Link>
