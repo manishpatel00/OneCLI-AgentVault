@@ -63,55 +63,52 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-brand/30">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/agentvault-logo.png"
-                alt="AgentVault"
-                width={28}
-                height={28}
-                priority
-              />
-              <span className="font-bold text-lg tracking-tight">
-                Onecli-AgentVault
-              </span>
+        <div className="container relative mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/agentvault-logo.png"
+              alt="AgentVault"
+              width={28}
+              height={28}
+              priority
+            />
+            <span className="font-bold text-lg tracking-tight">
+              Onecli-AgentVault
+            </span>
+          </Link>
+
+          <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-muted-foreground absolute left-1/2 -translate-x-1/2">
+            <Link href="/" className="hover:text-foreground transition-colors">
+              Home
             </Link>
-            <nav className="hidden md:flex gap-6 text-sm font-medium text-muted-foreground">
-              <Link
-                href="/"
-                className="hover:text-foreground transition-colors"
-              >
-                Home
-              </Link>
-              <Link
-                href="#product"
-                className="hover:text-foreground transition-colors"
-              >
-                Product
-              </Link>
-              <Link
-                href="https://github.com/manishpatel00/Onecli-AgentVault#readme"
-                target="_blank"
-                className="hover:text-foreground transition-colors"
-              >
-                Docs
-              </Link>
-              <Link
-                href="#pricing"
-                className="hover:text-foreground transition-colors"
-              >
-                Pricing
-              </Link>
-              <Link
-                href="https://github.com/manishpatel00/Onecli-AgentVault"
-                target="_blank"
-                className="hover:text-foreground transition-colors"
-              >
-                GitHub
-              </Link>
-            </nav>
-          </div>
+            <Link
+              href="#product"
+              className="hover:text-foreground transition-colors"
+            >
+              Product
+            </Link>
+            <Link
+              href="https://github.com/manishpatel00/Onecli-AgentVault#readme"
+              target="_blank"
+              className="hover:text-foreground transition-colors"
+            >
+              Docs
+            </Link>
+            <Link
+              href="#pricing"
+              className="hover:text-foreground transition-colors"
+            >
+              Pricing
+            </Link>
+            <Link
+              href="https://github.com/manishpatel00/Onecli-AgentVault"
+              target="_blank"
+              className="hover:text-foreground transition-colors"
+            >
+              GitHub
+            </Link>
+          </nav>
+
           <div className="flex items-center gap-3">
             <button
               onClick={() =>
