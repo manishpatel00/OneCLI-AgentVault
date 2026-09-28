@@ -26,13 +26,19 @@ export const syncLoginSession = async (
     const fallback =
       "Failed to sync session with server. Database or backend is down.";
     const body: unknown = await response.json().catch(() => null);
-    const message =
+    let message =
       body &&
       typeof body === "object" &&
       "error" in body &&
       typeof body.error === "string"
         ? body.error
         : fallback;
+
+    if (message === "Internal server error") {
+      message =
+        "Failed to sync session with database. Please verify database connection or retry.";
+    }
+
     return { status: response.status === 409 ? "conflict" : "error", message };
   } catch {
     return {
