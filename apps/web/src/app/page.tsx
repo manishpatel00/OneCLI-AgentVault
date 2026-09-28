@@ -5,11 +5,7 @@ import {
   ArrowRight,
   Check,
   Lock,
-  Activity,
-  Users,
   CheckCircle2,
-  Code2,
-  Link2,
   ShieldCheck,
   Sun,
   Moon,
@@ -19,6 +15,12 @@ import {
   Repeat2,
   MessageCircle,
   BarChart3,
+  Bot,
+  Gauge,
+  CheckCheck,
+  FileText,
+  History,
+  RotateCcw,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -854,43 +856,46 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 max-w-5xl mx-auto">
-              <div className="rounded-xl border bg-card p-8 shadow-sm transition-all hover:shadow-md">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Lock className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Block endpoints</h3>
-                <p className="text-muted-foreground">
+              <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-7 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-foreground/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <h3 className="text-xl font-bold tracking-tight mb-2.5 text-foreground">
+                  Block endpoints
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   Prevent agents from calling specific APIs (DELETE /repos, POST
                   /payments, or any path you define). Enforced at the proxy, not
                   a suggestion.
                 </p>
               </div>
-              <div className="rounded-xl border bg-card p-8 shadow-sm transition-all hover:shadow-md">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Activity className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Rate limit per agent</h3>
-                <p className="text-muted-foreground">
+
+              <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-7 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-foreground/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <h3 className="text-xl font-bold tracking-tight mb-2.5 text-foreground">
+                  Rate limit per agent
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   Cap how many requests an agent can make per minute, hour, or
                   day. Stop runaway loops before they cause damage.
                 </p>
               </div>
-              <div className="rounded-xl border bg-card p-8 shadow-sm transition-all hover:shadow-md">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <CheckCircle2 className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Require approval</h3>
-                <p className="text-muted-foreground">
+
+              <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-7 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-foreground/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <h3 className="text-xl font-bold tracking-tight mb-2.5 text-foreground">
+                  Require approval
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   Flag sensitive operations for human review before they go
                   through. Agents wait, you decide.
                 </p>
               </div>
-              <div className="rounded-xl border bg-card p-8 shadow-sm transition-all hover:shadow-md">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Users className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Scope per project</h3>
-                <p className="text-muted-foreground">
+
+              <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-7 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-foreground/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <h3 className="text-xl font-bold tracking-tight mb-2.5 text-foreground">
+                  Scope per project
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   Each agent only accesses the credentials and services assigned
                   to its project. No cross-project leakage.
                 </p>
@@ -932,124 +937,225 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
 
             <div className="grid gap-6 md:grid-cols-2 max-w-5xl mx-auto">
               {/* 1. Coding Agents */}
-              <div className="group relative overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-8 sm:p-9 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 backdrop-blur-md">
-                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/[0.04] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-500 group-hover:bg-emerald-500/20 group-hover:scale-125" />
-                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
-                  <Code2 className="h-6 w-6" />
+              <div className="group relative flex flex-col justify-between h-full overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-foreground/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-muted/40 blur-3xl transition-all duration-500 group-hover:scale-110" />
+
+                <div className="flex flex-col flex-1">
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-3 text-foreground transition-colors">
+                    Coding Agents
+                  </h3>
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-8 flex-1">
+                    Your Cursor or Claude agent pushes to GitHub, creates Jira
+                    tickets, and deploys to Vercel, all through
+                    AgentVault&apos;s gateway. Credentials injected, never
+                    exposed.
+                  </p>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
-                  Coding Agents
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-                  Your Cursor or Claude agent pushes to GitHub, creates Jira
-                  tickets, and deploys to Vercel, all through AgentVault&apos;s
-                  gateway. Credentials injected, never exposed.
-                </p>
-                <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60">
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    GITHUB
+
+                <div className="flex flex-nowrap items-center gap-1.5 pt-4 border-t border-border/60 mt-auto overflow-x-auto sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Image
+                        src="/icons/github.svg"
+                        alt="GitHub"
+                        width={14}
+                        height={14}
+                        className="h-3.5 w-3.5 object-contain dark:invert"
+                      />
+                    </span>
+                    <span className="leading-none">GITHUB</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    JIRA
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Image
+                        src="/icons/jira.svg"
+                        alt="Jira"
+                        width={14}
+                        height={14}
+                        className="h-3.5 w-3.5 object-contain"
+                      />
+                    </span>
+                    <span className="leading-none">JIRA</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    VERCEL
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Image
+                        src="/icons/vercel.svg"
+                        alt="Vercel"
+                        width={13}
+                        height={13}
+                        className="h-3.5 w-3.5 object-contain dark:invert"
+                      />
+                    </span>
+                    <span className="leading-none">VERCEL</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    LINEAR
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Image
+                        src="/icons/linear.svg"
+                        alt="Linear"
+                        width={14}
+                        height={14}
+                        className="h-3.5 w-3.5 object-contain"
+                      />
+                    </span>
+                    <span className="leading-none">LINEAR</span>
                   </span>
                 </div>
               </div>
 
               {/* 2. Autonomous Workflows */}
-              <div className="group relative overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-8 sm:p-9 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 backdrop-blur-md">
-                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/[0.04] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-500 group-hover:bg-emerald-500/20 group-hover:scale-125" />
-                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
-                  <Link2 className="h-6 w-6" />
+              <div className="group relative flex flex-col justify-between h-full overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-foreground/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-muted/40 blur-3xl transition-all duration-500 group-hover:scale-110" />
+
+                <div className="flex flex-col flex-1">
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-3 text-foreground transition-colors">
+                    Autonomous Workflows
+                  </h3>
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-8 flex-1">
+                    n8n, Dify, or custom pipelines call Slack, Google Calendar,
+                    and Stripe APIs. AgentVault injects OAuth tokens
+                    per-request. Revoke access instantly.
+                  </p>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
-                  Autonomous Workflows
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-                  n8n, Dify, or custom pipelines call Slack, Google Calendar,
-                  and Stripe APIs. AgentVault injects OAuth tokens per-request.
-                  Revoke access instantly.
-                </p>
-                <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60">
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    SLACK
+
+                <div className="flex flex-nowrap items-center gap-1.5 pt-4 border-t border-border/60 mt-auto overflow-x-auto sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Image
+                        src="/icons/slack.svg"
+                        alt="Slack"
+                        width={14}
+                        height={14}
+                        className="h-3.5 w-3.5 object-contain"
+                      />
+                    </span>
+                    <span className="leading-none">SLACK</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    GOOGLE CALENDAR
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Image
+                        src="/icons/google-calendar.svg"
+                        alt="Google Calendar"
+                        width={14}
+                        height={14}
+                        className="h-3.5 w-3.5 object-contain"
+                      />
+                    </span>
+                    <span className="leading-none">GOOGLE CALENDAR</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    STRIPE
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Image
+                        src="/icons/stripe.svg"
+                        alt="Stripe"
+                        width={14}
+                        height={14}
+                        className="h-3.5 w-3.5 object-contain"
+                      />
+                    </span>
+                    <span className="leading-none">STRIPE</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    GMAIL
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Image
+                        src="/icons/gmail.svg"
+                        alt="Gmail"
+                        width={14}
+                        height={14}
+                        className="h-3.5 w-3.5 object-contain"
+                      />
+                    </span>
+                    <span className="leading-none">GMAIL</span>
                   </span>
                 </div>
               </div>
 
               {/* 3. Team Governance */}
-              <div className="group relative overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-8 sm:p-9 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 backdrop-blur-md">
-                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/[0.04] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-500 group-hover:bg-emerald-500/20 group-hover:scale-125" />
-                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
-                  <Users className="h-6 w-6" />
+              <div className="group relative flex flex-col justify-between h-full overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-foreground/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-muted/40 blur-3xl transition-all duration-500 group-hover:scale-110" />
+
+                <div className="flex flex-col flex-1">
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-3 text-foreground transition-colors">
+                    Team Governance
+                  </h3>
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-8 flex-1">
+                    10 agents across 3 projects. Rate limits on the Slack API,
+                    approval rules for payment endpoints, full audit logs. One
+                    dashboard.
+                  </p>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
-                  Team Governance
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-                  10 agents across 3 projects. Rate limits on the Slack API,
-                  approval rules for payment endpoints, full audit logs. One
-                  dashboard.
-                </p>
-                <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60">
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    MULTI-AGENT
+
+                <div className="flex flex-nowrap items-center gap-1.5 pt-4 border-t border-border/60 mt-auto overflow-x-auto sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Bot className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="leading-none">MULTI-AGENT</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    RATE LIMITS
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Gauge className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="leading-none">RATE LIMITS</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    APPROVALS
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <CheckCheck className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="leading-none">APPROVALS</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    AUDIT LOGS
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <FileText className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="leading-none">AUDIT LOGS</span>
                   </span>
                 </div>
               </div>
 
               {/* 4. Security & Compliance */}
-              <div className="group relative overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-8 sm:p-9 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 backdrop-blur-md">
-                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/[0.04] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-500 group-hover:bg-emerald-500/20 group-hover:scale-125" />
-                <div className="mb-5 inline-flex h-13 w-13 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-xs transition-transform duration-300 group-hover:scale-110">
-                  <ShieldCheck className="h-6 w-6" />
+              <div className="group relative flex flex-col justify-between h-full overflow-hidden rounded-3xl border border-border/80 dark:border-zinc-800/80 bg-card/85 dark:bg-[#0c1017]/90 p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-foreground/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-muted/40 blur-3xl transition-all duration-500 group-hover:scale-110" />
+
+                <div className="flex flex-col flex-1">
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-3 text-foreground transition-colors">
+                    Security &amp; Compliance
+                  </h3>
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-8 flex-1">
+                    Show exactly which agent called which API, when, and what
+                    credentials were used. No keys in logs, no keys in prompts.
+                  </p>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mb-3 text-foreground group-hover:text-emerald-500 transition-colors">
-                  Security &amp; Compliance
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-                  Show exactly which agent called which API, when, and what
-                  credentials were used. No keys in logs, no keys in prompts.
-                </p>
-                <div className="flex flex-wrap gap-2 pt-3 border-t border-border/60">
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    SOC 2
+
+                <div className="flex flex-nowrap items-center gap-1.5 pt-4 border-t border-border/60 mt-auto overflow-x-auto sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="leading-none">SOC 2</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    AUDIT TRAIL
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <History className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="leading-none">AUDIT TRAIL</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    REVOCATION
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <RotateCcw className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="leading-none">REVOCATION</span>
                   </span>
-                  <span className="rounded-lg border border-border/80 bg-muted/60 dark:bg-zinc-900/80 px-3 py-1 text-xs font-mono font-semibold text-muted-foreground tracking-wider transition-all duration-200 group-hover:border-emerald-500/30 group-hover:text-foreground">
-                    ZERO-TRUST
+                  <span className="h-7 inline-flex items-center gap-1.5 shrink-0 rounded-lg border border-border/70 dark:border-zinc-800 bg-muted/50 dark:bg-zinc-900/80 px-2 text-[10px] sm:text-[10.5px] font-mono font-semibold tracking-tight text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/80 hover:text-foreground select-none whitespace-nowrap">
+                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <Lock className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="leading-none">ZERO-TRUST</span>
                   </span>
                 </div>
               </div>
@@ -1058,7 +1164,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
         </section>
 
         {/* Social Proof / Problem */}
-        <section className="py-24 relative overflow-hidden bg-math-grid border-y">
+        <section className="py-24 relative overflow-hidden bg-background border-y border-border/80">
           {/* Subtle Ambient Radial Light */}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(229,57,53,0.05),transparent_65%)] dark:bg-[radial-gradient(circle_at_center,rgba(229,57,53,0.08),transparent_65%)]" />
 
