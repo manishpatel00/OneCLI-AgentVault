@@ -170,9 +170,16 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
               <span>The Privacy-First Credential Gateway</span>
             </div>
 
-            <h1 className="text-5xl font-extrabold sm:text-6xl lg:text-7xl mb-6 leading-[1.12] tracking-tight text-foreground text-balance">
-              The credential gateway <br className="hidden sm:block" />
-              for AI agents
+            <h1 className="text-5xl font-extrabold sm:text-6xl lg:text-7xl mb-6 leading-[1.14] tracking-tight text-foreground text-balance">
+              The{" "}
+              <span className="font-handwriting text-[#E53935] dark:text-[#F87171] text-[1.25em] font-normal inline-block -rotate-2">
+                Credential
+              </span>{" "}
+              gateway <br className="hidden sm:block" />
+              for{" "}
+              <span className="text-[#00B050] dark:text-[#34D399] font-extrabold">
+                AI Agents
+              </span>
             </h1>
 
             <p className="mx-auto max-w-2xl text-lg sm:text-xl text-muted-foreground mb-12 leading-relaxed text-balance">

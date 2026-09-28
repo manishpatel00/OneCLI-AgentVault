@@ -39,6 +39,11 @@
   font-family: var(--font-handwriting), "Caveat", cursive;
 }
 
+html,
+body {
+  font-family: var(--font-sans), "Plus Jakarta Sans", sans-serif;
+}
+
 .bg-math-grid {
   background-image:
     linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
