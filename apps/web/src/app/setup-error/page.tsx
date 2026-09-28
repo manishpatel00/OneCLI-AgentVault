@@ -11,9 +11,9 @@ const errors: Record<string, { title: string; description: React.ReactNode }> =
       title: "OAuth not configured",
       description: (
         <p>
-          <Code>NEXTAUTH_SECRET</Code> is set but <Code>GOOGLE_CLIENT_ID</Code>{" "}
-          and <Code>GOOGLE_CLIENT_SECRET</Code> must be set together. Provide
-          all three for OAuth, or remove all three to use local mode.
+          <Code>AUTH_SECRET</Code> (or <Code>NEXTAUTH_SECRET</Code>),{" "}
+          <Code>GOOGLE_CLIENT_ID</Code>, and <Code>GOOGLE_CLIENT_SECRET</Code>{" "}
+          must all be set together for OAuth, or omitted for local mode.
         </p>
       ),
     },

@@ -14,7 +14,8 @@ export const LoginContent = ({ authMode }: { authMode: AuthMode }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryError = searchParams.get("error");
-  const { isAuthenticated, isLoading, user, signIn, signOut } = useAuth();
+  const { isAuthenticated, isLoading, user, signIn, signOut, authError } =
+    useAuth();
   const [signingIn, setSigningIn] = useState(false);
   const [retry, setRetry] = useState(0);
   const [error, setError] = useState<string | null>(queryError);
@@ -22,6 +23,13 @@ export const LoginContent = ({ authMode }: { authMode: AuthMode }) => {
   useEffect(() => {
     if (queryError) setError(queryError);
   }, [queryError]);
+
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+      setSigningIn(false);
+    }
+  }, [authError]);
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -62,7 +70,6 @@ export const LoginContent = ({ authMode }: { authMode: AuthMode }) => {
       await signIn();
     } catch {
       setError("Unable to start sign-in. Please try again.");
-    } finally {
       setSigningIn(false);
     }
   };

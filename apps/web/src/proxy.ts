@@ -5,7 +5,7 @@ import {
   IS_CLOUD,
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
-  NEXTAUTH_SECRET,
+  AUTH_SECRET,
   SECRET_ENCRYPTION_KEY,
 } from "@/lib/env";
 import { checkAuthSetup } from "@/lib/auth/setup-check";
@@ -15,7 +15,7 @@ import { isConnectOnlyAllowed } from "@/lib/connect-surface";
 const getSetupError = () =>
   checkAuthSetup({
     isCloud: IS_CLOUD,
-    nextAuthSecret: NEXTAUTH_SECRET,
+    nextAuthSecret: AUTH_SECRET,
     googleClientId: GOOGLE_CLIENT_ID,
     googleClientSecret: GOOGLE_CLIENT_SECRET,
     encryptionKey: SECRET_ENCRYPTION_KEY,

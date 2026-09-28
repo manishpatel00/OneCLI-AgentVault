@@ -4,7 +4,7 @@ import { Source_Serif_4 } from "next/font/google";
 import "@agentvault/ui/globals.css";
 import "./globals.css";
 import { AuthProvider } from "@/providers/auth-provider";
-import { getAuthMode } from "@/lib/auth/auth-mode";
+import { getAuthMode, isOAuthConfigured } from "@/lib/auth/auth-mode";
 import { GATEWAY_API_URL, IS_CLOUD } from "@/lib/env";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -49,6 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const authMode = getAuthMode();
+  const oauthConfigured = isOAuthConfigured();
 
   return (
     <html lang="en" suppressHydrationWarning className="bg-background">
@@ -63,7 +64,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable}`}
         suppressHydrationWarning
       >
-        <AuthProvider authMode={authMode}>
+        <AuthProvider authMode={authMode} oauthConfigured={oauthConfigured}>
           <QueryProvider>
             <ThemeProvider
               attribute="class"

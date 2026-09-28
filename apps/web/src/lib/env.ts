@@ -68,7 +68,12 @@ export const IS_CLOUD = EDITION_INFO.edition === "cloud";
 
 // ── Auth & Encryption ───────────────────────────────────────────────────
 
-export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET ?? "";
+/** Auth.js v5 primary secret; NEXTAUTH_SECRET kept for backward compatibility. */
+export const AUTH_SECRET =
+  process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
+
+/** @deprecated Prefer AUTH_SECRET — kept for existing deployments. */
+export const NEXTAUTH_SECRET = AUTH_SECRET;
 
 export const SECRET_ENCRYPTION_KEY = process.env.SECRET_ENCRYPTION_KEY ?? "";
 
@@ -77,6 +82,10 @@ export const OAUTH_STATE_SECRET = process.env.OAUTH_STATE_SECRET ?? "";
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
 
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
+
+/** True when Google OAuth login is fully configured (secret + client creds). */
+export const isOAuthEnabled = (): boolean =>
+  !!AUTH_SECRET && !!GOOGLE_CLIENT_ID && !!GOOGLE_CLIENT_SECRET;
 
 // ── Cloud: Cognito ──────────────────────────────────────────────────────
 
