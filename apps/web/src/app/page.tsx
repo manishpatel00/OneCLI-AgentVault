@@ -188,25 +188,22 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
             </p>
 
             {/* Code Mockup Card */}
-            <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#0d1219] text-zinc-300 shadow-2xl mb-12 transition-all hover:border-zinc-700/80">
-              {/* Terminal Titlebar */}
-              <div className="flex items-center justify-between border-b border-zinc-800/80 bg-[#111622]/90 px-4 py-3 sm:px-5">
+            <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#0c1017] shadow-2xl mb-12 transition-all hover:border-zinc-700/80">
+              <div className="flex items-center justify-between border-b border-zinc-800/80 bg-[#161b22]/70 px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex gap-1.5">
                     <div className="h-3 w-3 rounded-full bg-[#ff5f56]" />
                     <div className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
                     <div className="h-3 w-3 rounded-full bg-[#27c93f]" />
                   </div>
-                  <div className="flex items-center gap-2 text-xs sm:text-sm font-mono ml-1 text-zinc-400">
-                    <span className="text-zinc-500 font-bold select-none">
-                      &gt;_
-                    </span>
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-mono ml-1">
+                    <span className="text-zinc-500 font-bold">{">_"}</span>
                     <span>.env — proxied by agentvault</span>
                   </div>
                 </div>
                 <button
                   onClick={handleCopy}
-                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
                   aria-label="Copy code"
                 >
                   {copied ? (
@@ -225,96 +222,127 @@ ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
                 </button>
               </div>
 
-              {/* Terminal Body */}
-              <div className="p-4 sm:p-6 text-left font-mono text-xs sm:text-sm bg-[#0d1219] overflow-x-auto space-y-3">
-                {[
-                  {
-                    key: "OPENAI_API_KEY",
-                    prefix: "sk-proj-Xh4mQ2",
-                    suffix: "f8Kw",
-                    managed: true,
-                  },
-                  {
-                    key: "STRIPE_SECRET_KEY",
-                    prefix: "sk_live_51Hx8m",
-                    suffix: "Rq2v",
-                    managed: false,
-                  },
-                  {
-                    key: "GITHUB_TOKEN",
-                    prefix: "ghp_uV4nR7Tk",
-                    suffix: "p3Xz",
-                    managed: true,
-                  },
-                  {
-                    key: "AWS_SECRET_ACCESS_KEY",
-                    prefix: "aK9dPmXw",
-                    suffix: "L7Rq",
-                    managed: false,
-                  },
-                  {
-                    key: "DATABASE_URL",
-                    prefix: "postgres://acme:pg4s",
-                    suffix: "@db.acme.io",
-                    managed: false,
-                  },
-                  {
-                    key: "SLACK_BOT_TOKEN",
-                    prefix: "xoxb-8214-Ju7wK",
-                    suffix: "m2Np",
-                    managed: false,
-                  },
-                  {
-                    key: "ANTHROPIC_API_KEY",
-                    prefix: "sk-ant-api03-R5kT",
-                    suffix: "v8Nq",
-                    managed: true,
-                  },
-                ].map((row) => (
-                  <div
-                    key={row.key}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between py-1 px-2 rounded-md hover:bg-zinc-800/30 transition-colors group gap-1 sm:gap-4"
-                  >
-                    <div className="flex items-center flex-wrap gap-0.5 font-mono text-zinc-100">
-                      <span className="text-[#38bdf8] font-bold tracking-tight">
-                        {row.key}
-                      </span>
-                      <span className="text-zinc-400">=</span>
-                      <span className="text-zinc-100 font-medium">
-                        {row.prefix}
-                      </span>
-                      <span
-                        className="inline-block h-3.5 sm:h-4 w-20 sm:w-24 rounded-xs bg-[#c9d1d9] mx-1 align-middle select-none shadow-xs"
-                        aria-hidden="true"
-                      />
-                      <span className="text-zinc-100 font-medium">
-                        {row.suffix}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center">
-                      <span
-                        className={`text-[#22c55e] text-xs font-mono font-medium flex items-center gap-1.5 bg-[#062c19]/90 border border-[#1b6b3e]/60 px-2.5 py-0.5 rounded-md shadow-xs transition-opacity ${
-                          row.managed
-                            ? "opacity-100"
-                            : "opacity-0 group-hover:opacity-100"
-                        }`}
-                      >
-                        <Check className="size-3 text-[#22c55e] stroke-[2.5]" />
-                        <span>agentvault-managed</span>
-                      </span>
-                    </div>
+              <div className="p-5 sm:p-6 text-left font-mono text-xs sm:text-sm bg-[#0c1017] text-zinc-200 overflow-x-auto space-y-2">
+                {/* 1. OPENAI_API_KEY */}
+                <div className="flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-zinc-800/30 transition-colors group">
+                  <div className="flex items-center flex-wrap">
+                    <span className="text-[#38BDF8] font-semibold">
+                      OPENAI_API_KEY
+                    </span>
+                    <span className="text-zinc-300">=</span>
+                    <span className="text-zinc-200">sk-proj-Xh4mQ2</span>
+                    <span className="inline-block h-3.5 w-18 sm:w-20 bg-[#D1D5DB] rounded-xs mx-1 align-middle opacity-90" />
+                    <span className="text-zinc-200">f8Kw</span>
                   </div>
-                ))}
+                  <span className="text-[#34D399] text-xs flex items-center gap-1.5 bg-[#064e3b]/30 border border-[#059669]/30 px-2.5 py-0.5 rounded-md font-medium">
+                    <Check className="size-3" /> agentvault-managed
+                  </span>
+                </div>
 
-                {/* Terminal Footer */}
-                <div className="mt-4 pt-4 border-t border-zinc-800/80 text-zinc-400 flex flex-col sm:flex-row justify-between items-center gap-2">
-                  <span className="text-xs sm:text-sm font-mono text-zinc-400">
+                {/* 2. STRIPE_SECRET_KEY */}
+                <div className="flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-zinc-800/30 transition-colors group">
+                  <div className="flex items-center flex-wrap">
+                    <span className="text-[#38BDF8] font-semibold">
+                      STRIPE_SECRET_KEY
+                    </span>
+                    <span className="text-zinc-300">=</span>
+                    <span className="text-zinc-200">sk_live_51Hx8m</span>
+                    <span className="inline-block h-3.5 w-20 sm:w-24 bg-[#D1D5DB] rounded-xs mx-1 align-middle opacity-90" />
+                    <span className="text-zinc-200">Rq2v</span>
+                  </div>
+                  <span className="text-[#34D399] text-xs flex items-center gap-1.5 bg-[#064e3b]/30 border border-[#059669]/30 px-2.5 py-0.5 rounded-md font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Check className="size-3" /> agentvault-managed
+                  </span>
+                </div>
+
+                {/* 3. GITHUB_TOKEN */}
+                <div className="flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-zinc-800/30 transition-colors group">
+                  <div className="flex items-center flex-wrap">
+                    <span className="text-[#38BDF8] font-semibold">
+                      GITHUB_TOKEN
+                    </span>
+                    <span className="text-zinc-300">=</span>
+                    <span className="text-zinc-200">ghp_uV4nR7Tk</span>
+                    <span className="inline-block h-3.5 w-18 sm:w-20 bg-[#D1D5DB] rounded-xs mx-1 align-middle opacity-90" />
+                    <span className="text-zinc-200">p3Xz</span>
+                  </div>
+                  <span className="text-[#34D399] text-xs flex items-center gap-1.5 bg-[#064e3b]/30 border border-[#059669]/30 px-2.5 py-0.5 rounded-md font-medium">
+                    <Check className="size-3" /> agentvault-managed
+                  </span>
+                </div>
+
+                {/* 4. AWS_SECRET_ACCESS_KEY */}
+                <div className="flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-zinc-800/30 transition-colors group">
+                  <div className="flex items-center flex-wrap">
+                    <span className="text-[#38BDF8] font-semibold">
+                      AWS_SECRET_ACCESS_KEY
+                    </span>
+                    <span className="text-zinc-300">=</span>
+                    <span className="text-zinc-200">aK9dPmXw</span>
+                    <span className="inline-block h-3.5 w-20 sm:w-22 bg-[#D1D5DB] rounded-xs mx-1 align-middle opacity-90" />
+                    <span className="text-zinc-200">L7Rq</span>
+                  </div>
+                  <span className="text-[#34D399] text-xs flex items-center gap-1.5 bg-[#064e3b]/30 border border-[#059669]/30 px-2.5 py-0.5 rounded-md font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Check className="size-3" /> agentvault-managed
+                  </span>
+                </div>
+
+                {/* 5. DATABASE_URL */}
+                <div className="flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-zinc-800/30 transition-colors group">
+                  <div className="flex items-center flex-wrap">
+                    <span className="text-[#38BDF8] font-semibold">
+                      DATABASE_URL
+                    </span>
+                    <span className="text-zinc-300">=</span>
+                    <span className="text-zinc-200">postgres://acme:pg4s</span>
+                    <span className="inline-block h-3.5 w-14 sm:w-16 bg-[#D1D5DB] rounded-xs mx-1 align-middle opacity-90" />
+                    <span className="text-zinc-200">@db.acme.io</span>
+                  </div>
+                  <span className="text-[#34D399] text-xs flex items-center gap-1.5 bg-[#064e3b]/30 border border-[#059669]/30 px-2.5 py-0.5 rounded-md font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Check className="size-3" /> agentvault-managed
+                  </span>
+                </div>
+
+                {/* 6. SLACK_BOT_TOKEN */}
+                <div className="flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-zinc-800/30 transition-colors group">
+                  <div className="flex items-center flex-wrap">
+                    <span className="text-[#38BDF8] font-semibold">
+                      SLACK_BOT_TOKEN
+                    </span>
+                    <span className="text-zinc-300">=</span>
+                    <span className="text-zinc-200">xoxb-8214-Ju7wK</span>
+                    <span className="inline-block h-3.5 w-18 sm:w-20 bg-[#D1D5DB] rounded-xs mx-1 align-middle opacity-90" />
+                    <span className="text-zinc-200">m2Np</span>
+                  </div>
+                  <span className="text-[#34D399] text-xs flex items-center gap-1.5 bg-[#064e3b]/30 border border-[#059669]/30 px-2.5 py-0.5 rounded-md font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Check className="size-3" /> agentvault-managed
+                  </span>
+                </div>
+
+                {/* 7. ANTHROPIC_API_KEY */}
+                <div className="flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-zinc-800/30 transition-colors group">
+                  <div className="flex items-center flex-wrap">
+                    <span className="text-[#38BDF8] font-semibold">
+                      ANTHROPIC_API_KEY
+                    </span>
+                    <span className="text-zinc-300">=</span>
+                    <span className="text-zinc-200">sk-ant-api03-R5kT</span>
+                    <span className="inline-block h-3.5 w-18 sm:w-22 bg-[#D1D5DB] rounded-xs mx-1 align-middle opacity-90" />
+                    <span className="text-zinc-200">v8Nq</span>
+                  </div>
+                  <span className="text-[#34D399] text-xs flex items-center gap-1.5 bg-[#064e3b]/30 border border-[#059669]/30 px-2.5 py-0.5 rounded-md font-medium">
+                    <Check className="size-3" /> agentvault-managed
+                  </span>
+                </div>
+
+                {/* Footer Bar */}
+                <div className="mt-5 pt-4 border-t border-zinc-800/80 flex flex-col sm:flex-row justify-between items-center gap-2 font-mono text-xs">
+                  <span className="text-zinc-400 font-normal">
                     Ready for Cursor, Claude Code, LangChain &amp; n8n
                   </span>
-                  <span className="text-[#00ff88] text-xs sm:text-sm font-mono font-semibold flex items-center gap-1.5">
-                    <CheckCircle2 className="size-4 text-[#00ff88]" />
-                    <span>0 secrets exposed to models</span>
+                  <span className="text-[#00DF89] font-medium flex items-center gap-1.5">
+                    <CheckCircle2 className="size-3.5 text-[#00DF89]" />0
+                    secrets exposed to models
                   </span>
                 </div>
               </div>
