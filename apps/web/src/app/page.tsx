@@ -13,9 +13,14 @@ import {
   ShieldCheck,
   Sun,
   Moon,
+  Copy,
+  Terminal,
+  Sparkles,
+  Cpu,
+  Github,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 
 /**
@@ -58,19 +63,35 @@ function ThemedVideo({
 
 export default function Home() {
   const { resolvedTheme, setTheme } = useTheme();
+  const [copied, setCopied] = useState(false);
+
+  const envSnippet = `OPENAI_API_KEY=sk-proj-Xh4mQ2████████f8Kw
+STRIPE_SECRET_KEY=sk_live_51Hx8m████████Rq2v
+GITHUB_TOKEN=ghp_uV4nR7Tk████████p3Xz
+AWS_SECRET_ACCESS_KEY=aK9dPmXw████████L7Rq
+DATABASE_URL=postgres://acme:pg4s█████@db.acme.io
+SLACK_BOT_TOKEN=xoxb-8214-Ju7wK████████m2Np
+ANTHROPIC_API_KEY=sk-ant-api03-R5kT████████v8Nq`;
+
+  const handleCopy = () => {
+    void navigator.clipboard.writeText(envSnippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-brand/30">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <div className="container relative mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2.5 group">
             <Image
               src="/agentvault-logo.png"
               alt="AgentVault"
               width={28}
               height={28}
               priority
+              className="transition-transform group-hover:scale-105"
             />
             <span className="font-bold text-lg tracking-tight">
               Onecli-AgentVault
@@ -78,33 +99,37 @@ export default function Home() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-muted-foreground absolute left-1/2 -translate-x-1/2">
-            <Link href="/" className="hover:text-foreground transition-colors">
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors hover:scale-105"
+            >
               Home
             </Link>
             <Link
               href="#product"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-foreground transition-colors hover:scale-105"
             >
               Product
             </Link>
             <Link
               href="https://github.com/manishpatel00/Onecli-AgentVault#readme"
               target="_blank"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-foreground transition-colors hover:scale-105"
             >
               Docs
             </Link>
             <Link
               href="#pricing"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-foreground transition-colors hover:scale-105"
             >
               Pricing
             </Link>
             <Link
               href="https://github.com/manishpatel00/Onecli-AgentVault"
               target="_blank"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-foreground transition-colors hover:scale-105 inline-flex items-center gap-1.5"
             >
+              <Github className="size-3.5" />
               GitHub
             </Link>
           </nav>
@@ -114,15 +139,15 @@ export default function Home() {
               onClick={() =>
                 setTheme(resolvedTheme === "dark" ? "light" : "dark")
               }
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-input bg-background/50 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               aria-label="Toggle theme"
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun className="h-[1.1rem] w-[1.1rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.1rem] w-[1.1rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </button>
             <Link
               href="/auth/login"
-              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-all hover:bg-primary/90 hover:shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               Get Started
             </Link>
@@ -132,43 +157,79 @@ export default function Home() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden py-24 lg:py-32">
+        <section className="relative overflow-hidden pt-20 pb-24 lg:pt-28 lg:pb-32">
+          {/* Subtle Ambient Radial Glow */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-[600px] bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(16,185,129,0.12),transparent_70%)] dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(16,185,129,0.18),transparent_70%)]" />
           <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+
           <div className="container relative mx-auto max-w-6xl px-4 text-center">
-            <h1 className="text-5xl font-extrabold sm:text-6xl lg:text-7xl mb-6 leading-[1.15] tracking-tight text-foreground">
+            {/* Version / Feature Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-muted/70 px-3.5 py-1 text-xs font-medium text-muted-foreground backdrop-blur-md mb-8 shadow-xs transition-all hover:border-foreground/20 hover:text-foreground">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-semibold text-foreground">
+                OneCLI-AgentVault
+              </span>
+              <span className="text-border">|</span>
+              <span>The Privacy-First Credential Gateway</span>
+              <Sparkles className="size-3 text-amber-500" />
+            </div>
+
+            <h1 className="text-5xl font-extrabold sm:text-6xl lg:text-7xl mb-6 leading-[1.14] tracking-tight text-foreground text-balance">
               The credential gateway <br className="hidden sm:block" />
               for AI agents
             </h1>
 
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-10 leading-relaxed">
-              Route every request through AgentVault.{" "}
-              <br className="hidden sm:block" /> Enforce policies, inject
-              credentials. Keys never leave the vault.
+            <p className="mx-auto max-w-2xl text-lg sm:text-xl text-muted-foreground mb-10 leading-relaxed text-balance">
+              Route every request through AgentVault. Enforce granular policies,
+              inject credentials at the network layer. Keys never touch the
+              agent.
             </p>
 
-            {/* Code Mockup */}
-            <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border bg-card shadow-2xl mb-16">
-              <div className="flex items-center gap-2 border-b bg-muted/50 px-4 py-3">
-                <div className="flex gap-1.5">
-                  <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                  <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-                  <div className="h-3 w-3 rounded-full bg-green-500/80" />
+            {/* Code Mockup Card */}
+            <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-border/70 bg-card shadow-2xl mb-12 transition-all hover:border-border">
+              <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-red-500/80" />
+                    <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
+                    <div className="h-3 w-3 rounded-full bg-green-500/80" />
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground font-mono ml-2">
+                    <Terminal className="size-3.5" />
+                    .env — proxied by agentvault
+                  </div>
                 </div>
-                <div className="mx-auto text-xs font-medium text-muted-foreground font-mono">
-                  .env — proxied by agentvault
-                </div>
+                <button
+                  onClick={handleCopy}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                  aria-label="Copy code"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="size-3.5 text-emerald-500" />
+                      <span className="text-emerald-500 font-medium">
+                        Copied!
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
               </div>
-              <div className="p-4 text-left font-mono text-sm sm:text-base bg-[#0d1117] text-zinc-300 overflow-x-auto">
-                <div className="flex justify-between items-center py-1 group">
+              <div className="p-5 text-left font-mono text-sm sm:text-base bg-[#0d1117] text-zinc-300 overflow-x-auto">
+                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
                   <span>
                     <span className="text-[#79c0ff]">OPENAI_API_KEY</span>
                     =sk-proj-Xh4mQ2████████f8Kw
                   </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded">
                     <Check className="h-3 w-3" /> agentvault-managed
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-1 group">
+                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
                   <span>
                     <span className="text-[#79c0ff]">STRIPE_SECRET_KEY</span>
                     =sk_live_51Hx8m████████Rq2v
@@ -177,7 +238,7 @@ export default function Home() {
                     <Check className="h-3 w-3" /> agentvault-managed
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-1 group">
+                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
                   <span>
                     <span className="text-[#79c0ff]">GITHUB_TOKEN</span>
                     =ghp_uV4nR7Tk████████p3Xz
@@ -186,7 +247,7 @@ export default function Home() {
                     <Check className="h-3 w-3" /> agentvault-managed
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-1 group">
+                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
                   <span>
                     <span className="text-[#79c0ff]">
                       AWS_SECRET_ACCESS_KEY
@@ -197,7 +258,7 @@ export default function Home() {
                     <Check className="h-3 w-3" /> agentvault-managed
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-1 group">
+                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
                   <span>
                     <span className="text-[#79c0ff]">DATABASE_URL</span>
                     =postgres://acme:pg4s█████@db.acme.io
@@ -206,7 +267,7 @@ export default function Home() {
                     <Check className="h-3 w-3" /> agentvault-managed
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-1 group">
+                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
                   <span>
                     <span className="text-[#79c0ff]">SLACK_BOT_TOKEN</span>
                     =xoxb-8214-Ju7wK████████m2Np
@@ -215,34 +276,70 @@ export default function Home() {
                     <Check className="h-3 w-3" /> agentvault-managed
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-1 group">
+                <div className="flex justify-between items-center py-1.5 group hover:bg-zinc-800/30 px-2 rounded">
                   <span>
                     <span className="text-[#79c0ff]">ANTHROPIC_API_KEY</span>
                     =sk-ant-api03-R5kT████████v8Nq
                   </span>
-                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="text-[#3fb950] text-xs flex items-center gap-1 bg-[#2ea043]/10 px-2 py-0.5 rounded">
                     <Check className="h-3 w-3" /> agentvault-managed
                   </span>
                 </div>
-                <div className="mt-4 pt-4 border-t border-zinc-800 text-zinc-500 flex justify-between items-center">
-                  <span className="text-sm">
-                    Want this for your environment?
+                <div className="mt-4 pt-4 border-t border-zinc-800/80 text-zinc-400 flex flex-col sm:flex-row justify-between items-center gap-2">
+                  <span className="text-xs">
+                    Ready for Cursor, Claude Code, LangChain &amp; n8n
                   </span>
-                  <span className="text-[#ff7b72] text-sm">
-                    0 keys exposed to agents
+                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="size-3.5" /> 0 secrets exposed to
+                    models
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
               <Link
                 href="/auth/login"
-                className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-md bg-brand px-8 text-base font-medium text-primary-foreground shadow transition-colors hover:bg-brand/90"
+                className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl bg-brand px-8 text-base font-medium text-primary-foreground shadow-sm transition-all hover:bg-brand/90 hover:shadow-md hover:scale-[1.02]"
               >
                 Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
+              <Link
+                href="https://github.com/manishpatel00/Onecli-AgentVault#readme"
+                target="_blank"
+                className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl border border-input bg-card/60 px-8 text-base font-medium text-foreground shadow-xs transition-all hover:bg-accent hover:text-accent-foreground hover:scale-[1.02]"
+              >
+                Explore Documentation
+              </Link>
+            </div>
+
+            {/* Supported Environments Badges */}
+            <div className="pt-6 border-t border-border/40">
+              <p className="text-xs font-semibold tracking-wider uppercase text-muted-foreground mb-4">
+                Seamlessly Integrates With
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {[
+                  "Cursor",
+                  "Claude Code",
+                  "OpenAI",
+                  "Anthropic",
+                  "LangChain",
+                  "Dify",
+                  "n8n",
+                  "AutoGPT",
+                ].map((tech) => (
+                  <span
+                    key={tech}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-card/40 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors cursor-default"
+                  >
+                    <Cpu className="size-3 text-emerald-500" />
+                    {tech}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </section>
