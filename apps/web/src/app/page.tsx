@@ -138,7 +138,7 @@ export default function Home() {
         <section className="relative overflow-hidden py-24 lg:py-32">
           <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
           <div className="container relative mx-auto max-w-6xl px-4 text-center">
-            <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl mb-6 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h1 className="text-5xl font-extrabold sm:text-6xl lg:text-7xl mb-6 leading-[1.15] tracking-tight text-foreground">
               The credential gateway <br className="hidden sm:block" />
               for AI agents
             </h1>
