@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.0.0 (2026-09-30)
+
+
+### Features
+
+* **agent:** add real app connection setup flow and update contacts tab UI ([cb52009](https://github.com/manishpatel00/OneCLI-AgentVault/commit/cb520091486860799e37f6da75aa23583b65c27f))
+* **agents:** add full agent management and chat workspace interface ([7a076fa](https://github.com/manishpatel00/OneCLI-AgentVault/commit/7a076fa38b1f13018f50c0f48c0c1a780cb8e40b))
+* **agent:** update welcome view, full app catalog, memory modal, skills modal, and instructions ([089ab7b](https://github.com/manishpatel00/OneCLI-AgentVault/commit/089ab7b29f1c9d4f809f28520ec9fcb2138dbeb9))
+* **auth:** add direct email and password authentication with secure scrypt hashing and bootstrap ([6f57d33](https://github.com/manishpatel00/OneCLI-AgentVault/commit/6f57d334890eb14af79b71c3ee81afeffc742fa0))
+* **core:** integrate agent engineering workflows and harden auth session recovery ([b759e1f](https://github.com/manishpatel00/OneCLI-AgentVault/commit/b759e1f1d2a36bbd4583e1a636403532979750fc))
+* initial commit of AgentVault after rebranding and updates ([9df1628](https://github.com/manishpatel00/OneCLI-AgentVault/commit/9df1628e54b919c4f820115df21e5a7fd354cf3e))
+* integrate agent skills workflows and enhance auth session recovery ([2c10ece](https://github.com/manishpatel00/OneCLI-AgentVault/commit/2c10ece5d103a59958222f62b85e193c7e9ce43c))
+* **landing:** add infinite brand marquee ticker for integrations and developer trust badges ([84041d9](https://github.com/manishpatel00/OneCLI-AgentVault/commit/84041d915704aa9a309a88ee8472ab32e7e71029))
+* **landing:** elevate hero design, copyable env mockup, ambient glow, and integrations badge ([a2dcca1](https://github.com/manishpatel00/OneCLI-AgentVault/commit/a2dcca1929a7efedd29f35960551384fa6fe38ef))
+* resolve landing page navigation, add theme toggler to landing and sidebar, configure persistent auth flow ([03019e3](https://github.com/manishpatel00/OneCLI-AgentVault/commit/03019e339270881e3e4552774273456a54014c05))
+* **web:** refine landing page cards and clean up background patterns ([645750a](https://github.com/manishpatel00/OneCLI-AgentVault/commit/645750a74be0f4d7abd53228c07f626e380b4cc8))
+
+
+### Bug Fixes
+
+* **auth:** prevent unique constraint collisions on externalAuthId and improve session sync error handling ([02241f9](https://github.com/manishpatel00/OneCLI-AgentVault/commit/02241f99c0b7120f27f853b96d678e19fc658a12))
+* **auth:** resolve session sync 500 error due to database connection delays and concurrency races ([ebb6990](https://github.com/manishpatel00/OneCLI-AgentVault/commit/ebb699073ff0f9d47d873b23d7f7ed5093aefe08))
+* **auth:** trigger immediate session update after credentials login and signup ([f82b2f9](https://github.com/manishpatel00/OneCLI-AgentVault/commit/f82b2f9ff94ce27ca9494e40f4079fc55626c79d))
+* **db:** sync schema to postgres database and fix package scripts ([47a4f91](https://github.com/manishpatel00/OneCLI-AgentVault/commit/47a4f91f67b685720f87bb986a24ee4131122dd8))
+* fall back to safe SessionProvider when session provider isn't initialized (avoid 500 on /v1/auth/session) ([6275c59](https://github.com/manishpatel00/OneCLI-AgentVault/commit/6275c59e4b7115248f31b0ce8d8fbae8a6fb6877))
+* implement session recovery and error display on login screen to … ([530e538](https://github.com/manishpatel00/OneCLI-AgentVault/commit/530e5385427cc8cb825f4e6045974c14396d75ef))
+* implement session recovery and error display on login screen to prevent infinite spinner on database sync failures ([845c5f4](https://github.com/manishpatel00/OneCLI-AgentVault/commit/845c5f425d80afe7fdf143c52564597d77fd0af8))
+* **landing:** fix descender clipping and text rendering on 'agents' in hero heading ([0556e8a](https://github.com/manishpatel00/OneCLI-AgentVault/commit/0556e8abed47e99fe75395e2e33bbf45041da629))
+* resolve eslint max-warnings and intercept CORS OPTIONS preflight requests in proxy middleware ([3b96768](https://github.com/manishpatel00/OneCLI-AgentVault/commit/3b9676806c2df7db4faba00a0b2a5c674c487052))
+* use default GITHUB_TOKEN in release workflow ([7f04af4](https://github.com/manishpatel00/OneCLI-AgentVault/commit/7f04af4875b191a2c84cbf83382f63271086b131))
+
 ## [1.43.0](https://github.com/agentvault/agentvault/compare/v1.42.0...v1.43.0) (2026-07-25)
 
 
