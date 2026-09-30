@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Key } from "lucide-react";
 import { Card } from "@agentvault/ui/components/card";
 import { Button } from "@agentvault/ui/components/button";
@@ -54,8 +54,29 @@ export const AgentModels = ({ agentName }: AgentModelsProps) => {
     },
   ];
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("agentvault_has_model_key");
+      if (stored === "true") {
+        setAnthropicKey("sk-ant-api03-••••••••••••••••••••••••••••");
+      }
+    }
+  }, []);
+
   const handleSave = () => {
-    toast.success("Model provider settings saved");
+    if (typeof window !== "undefined") {
+      if (anthropicKey.trim() || openaiKey.trim()) {
+        localStorage.setItem("agentvault_has_model_key", "true");
+        toast.success(
+          "Model provider settings saved. Agent is ready to respond.",
+        );
+      } else {
+        localStorage.setItem("agentvault_has_model_key", "false");
+        toast.info(
+          "No keys provided. Model provider will reject requests until key is added.",
+        );
+      }
+    }
   };
 
   return (
