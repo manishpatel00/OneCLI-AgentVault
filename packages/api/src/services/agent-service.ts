@@ -42,6 +42,35 @@ export const getDefaultAgent = async (projectId: string) => {
   });
 };
 
+export const getAgentById = async (projectId: string, agentId: string) => {
+  const agent = await db.agent.findFirst({
+    where: {
+      projectId,
+      OR: [{ id: agentId }, { identifier: agentId }],
+    },
+    select: {
+      id: true,
+      projectId: true,
+      name: true,
+      identifier: true,
+      accessToken: true,
+      isDefault: true,
+      secretMode: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!agent) {
+    throw new ServiceError("NOT_FOUND", "Agent not found");
+  }
+
+  return {
+    ...agent,
+    secretMode: agent.secretMode as SecretMode,
+  };
+};
+
 export const agentExistsByIdentifier = async (
   projectId: string,
   identifier: string,

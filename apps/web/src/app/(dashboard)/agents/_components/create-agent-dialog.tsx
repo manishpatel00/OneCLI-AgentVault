@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Copy, Check, CircleCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -47,6 +48,7 @@ export const CreateAgentDialog = ({
   const [createdIdentifier, setCreatedIdentifier] = useState<string | null>(
     null,
   );
+  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null);
   const [groupId, setGroupId] = useState<string | null>(null);
   const { copied, copy } = useCopyToClipboard();
   const createAgent = useCreateAgent();
@@ -76,6 +78,7 @@ export const CreateAgentDialog = ({
       {
         onSuccess: (agent) => {
           setCreatedIdentifier(agent.identifier);
+          setCreatedAgentId(agent.id);
           toast.success("Agent created");
           // Group assignment is best-effort: the agent exists either way
           // (no-op in editions without agent groups).
@@ -96,6 +99,7 @@ export const CreateAgentDialog = ({
       setIdentifier("");
       setIdentifierTouched(false);
       setCreatedIdentifier(null);
+      setCreatedAgentId(null);
       setGroupId(null);
     }
     onOpenChange(value);
@@ -113,7 +117,7 @@ export const CreateAgentDialog = ({
               <DialogHeader className="items-center">
                 <DialogTitle>Agent created</DialogTitle>
                 <DialogDescription>
-                  Use this identifier to select the agent in the SDK.
+                  Your agent is live and ready to connect to the gateway.
                 </DialogDescription>
               </DialogHeader>
             </div>
@@ -136,10 +140,25 @@ export const CreateAgentDialog = ({
                 </Button>
               </div>
             </div>
-            <DialogFooter>
-              <Button onClick={() => handleClose(false)} className="w-full">
-                Done
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleClose(false)}
+                className="w-full sm:w-auto"
+              >
+                Close
               </Button>
+              {createdAgentId && (
+                <Button
+                  asChild
+                  className="w-full sm:w-auto"
+                  onClick={() => handleClose(false)}
+                >
+                  <Link href={`/agents/${createdAgentId}`}>
+                    Open Agent Interface
+                  </Link>
+                </Button>
+              )}
             </DialogFooter>
           </>
         ) : (

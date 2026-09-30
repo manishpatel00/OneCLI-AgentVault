@@ -15,6 +15,7 @@ import { checkDashboardRedirect } from "@/lib/user-plan";
 import { getDashboardRedirect } from "@/lib/dashboard/session-redirect";
 import { apiFetch } from "@/lib/api-fetch";
 import { PlanGateProvider } from "@/lib/plan-gate";
+import { cn } from "@agentvault/ui/lib/utils";
 
 export default function DashboardLayout({
   children,
@@ -33,6 +34,9 @@ export default function DashboardLayout({
   const isSettings =
     pathname.startsWith("/settings") ||
     /^\/org\/[^/]+\/settings(\/|$)/.test(pathname);
+
+  const isAgentDetail =
+    pathname.startsWith("/agents/") && pathname !== "/agents";
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -148,9 +152,22 @@ export default function DashboardLayout({
                 <SettingsNav />
               </aside>
             )}
-            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+            <div
+              className={cn(
+                "min-h-0 min-w-0 flex-1",
+                isAgentDetail
+                  ? "flex flex-col h-full overflow-hidden"
+                  : "overflow-y-auto overflow-x-hidden",
+              )}
+            >
               {isSettings && <SettingsMobileNav />}
-              <main className="mx-auto min-w-0 max-w-6xl p-4 sm:p-6">
+              <main
+                className={cn(
+                  isAgentDetail
+                    ? "h-full w-full min-h-0 flex-1 overflow-hidden p-0"
+                    : "mx-auto min-w-0 max-w-6xl p-4 sm:p-6",
+                )}
+              >
                 {children}
               </main>
             </div>

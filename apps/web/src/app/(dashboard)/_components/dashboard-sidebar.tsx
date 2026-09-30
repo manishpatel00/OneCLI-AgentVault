@@ -7,7 +7,10 @@ import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import { navItems } from "@/lib/nav-config";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useAgents } from "@/hooks/use-agents";
+import { Bot, Sun, Moon } from "lucide-react";
+import { cn } from "@agentvault/ui/lib/utils";
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +20,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarGroup,
 } from "@agentvault/ui/components/sidebar";
 
 const SidebarThemeToggle = () => {
@@ -43,6 +47,46 @@ const SidebarThemeToggle = () => {
   );
 };
 
+const NavAgents = () => {
+  const pathname = usePathname();
+  const { data: agents = [] } = useAgents();
+
+  if (agents.length === 0) return null;
+
+  return (
+    <SidebarGroup className="group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0 pt-2">
+      <div className="flex items-center justify-between px-2 pb-1.5 group-data-[collapsible=icon]:hidden">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+          Agents
+        </span>
+      </div>
+      <SidebarMenu>
+        {agents.map((agent: { id: string; name: string }) => {
+          const isActive = pathname.startsWith(`/agents/${agent.id}`);
+          return (
+            <SidebarMenuItem key={agent.id}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive}
+                tooltip={agent.name}
+                className={cn(
+                  "font-normal data-[active=true]:bg-brand/10 data-[active=true]:font-medium data-[active=true]:text-brand data-[active=true]:hover:bg-brand/15 dark:data-[active=true]:bg-brand/10 dark:data-[active=true]:text-brand dark:data-[active=true]:hover:bg-brand/15",
+                )}
+              >
+                <Link href={`/agents/${agent.id}`}>
+                  <Bot className="size-4 shrink-0 text-muted-foreground group-data-[active=true]:text-brand" />
+                  <span className="truncate">{agent.name}</span>
+                  <span className="size-1.5 rounded-full bg-emerald-500 shrink-0 ml-auto group-data-[collapsible=icon]:hidden" />
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
+      </SidebarMenu>
+    </SidebarGroup>
+  );
+};
+
 export const DashboardSidebar = ({
   ...props
 }: React.ComponentProps<typeof Sidebar>) => {
@@ -65,6 +109,7 @@ export const DashboardSidebar = ({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navItems} />
+        <NavAgents />
       </SidebarContent>
       <SidebarFooter className="flex flex-col gap-2 group-data-[collapsible=icon]:px-0">
         <SidebarThemeToggle />

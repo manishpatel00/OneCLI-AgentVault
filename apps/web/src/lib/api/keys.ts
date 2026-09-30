@@ -8,6 +8,8 @@ export const queryKeys = {
   agents: {
     all: () => ["agents", ...scope()] as const,
     list: () => [...queryKeys.agents.all(), "list"] as const,
+    detail: (agentId: string) =>
+      [...queryKeys.agents.all(), "detail", agentId] as const,
   },
   secrets: {
     all: () => ["secrets", ...scope()] as const,

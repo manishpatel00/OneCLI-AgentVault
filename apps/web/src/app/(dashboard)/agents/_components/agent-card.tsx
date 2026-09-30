@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   MoreHorizontal,
   RotateCw,
@@ -8,6 +9,8 @@ import {
   KeyRound,
   Pencil,
   Star,
+  MessageSquare,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Card } from "@agentvault/ui/components/card";
 import { Button } from "@agentvault/ui/components/button";
@@ -94,11 +97,23 @@ export const AgentCard = ({ agent, autoOpenAccess }: AgentCardProps) => {
   const handleSetDefault = () => setDefaultMutation.mutate(agent.id);
 
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-medium">{agent.name}</h3>
+    <Card className="p-5 hover:border-zinc-400/60 dark:hover:border-zinc-700/80 transition-all duration-200 shadow-xs hover:shadow-md">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-2.5">
+          <div className="flex items-center gap-2.5">
+            <Link
+              href={`/agents/${agent.id}`}
+              className="text-base font-semibold text-foreground hover:text-brand hover:underline transition-colors"
+            >
+              {agent.name}
+            </Link>
+            <Badge
+              variant="outline"
+              className="text-[11px] border-emerald-500/30 text-emerald-500 bg-emerald-500/10 gap-1.5"
+            >
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Online
+            </Badge>
             {agent.isDefault && (
               <Badge variant="outline" className="text-xs">
                 Default
@@ -116,7 +131,7 @@ export const AgentCard = ({ agent, autoOpenAccess }: AgentCardProps) => {
             <button
               type="button"
               onClick={() => setSecretsDialogOpen(true)}
-              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <KeyRound className="size-3" />
               Credential access
@@ -124,62 +139,90 @@ export const AgentCard = ({ agent, autoOpenAccess }: AgentCardProps) => {
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-7">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() => {
-                setNewName(agent.name);
-                setRenameDialogOpen(true);
-              }}
-            >
-              <Pencil className="size-4" />
-              Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setSecretsDialogOpen(true)}>
-              <KeyRound className="size-4" />
-              Credential access
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setRotateDialogOpen(true)}>
-              <RotateCw className="size-4" />
-              Rotate token
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {!agent.isDefault && (
-              <DropdownMenuItem onSelect={() => setSetDefaultDialogOpen(true)}>
-                <Star className="size-4" />
-                Set as default
-              </DropdownMenuItem>
-            )}
-            {agent.isDefault ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="pointer-events-auto">
-                    <DropdownMenuItem disabled variant="destructive">
-                      <Trash2 className="size-4" />
-                      Delete agent
-                    </DropdownMenuItem>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  Default agent cannot be deleted
-                </TooltipContent>
-              </Tooltip>
-            ) : (
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5 h-8 cursor-pointer"
+          >
+            <Link href={`/agents/${agent.id}?tab=chat`}>
+              <MessageSquare className="size-3.5 text-brand" />
+              Chat
+            </Link>
+          </Button>
+
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5 h-8 cursor-pointer"
+          >
+            <Link href={`/agents/${agent.id}?tab=connections`}>
+              <SlidersHorizontal className="size-3.5" />
+              Manage
+            </Link>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => setDeleteDialogOpen(true)}
+                onSelect={() => {
+                  setNewName(agent.name);
+                  setRenameDialogOpen(true);
+                }}
               >
-                <Trash2 className="size-4" />
-                Delete agent
+                <Pencil className="size-4" />
+                Rename
               </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem onSelect={() => setSecretsDialogOpen(true)}>
+                <KeyRound className="size-4" />
+                Credential access
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setRotateDialogOpen(true)}>
+                <RotateCw className="size-4" />
+                Rotate token
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {!agent.isDefault && (
+                <DropdownMenuItem
+                  onSelect={() => setSetDefaultDialogOpen(true)}
+                >
+                  <Star className="size-4" />
+                  Set as default
+                </DropdownMenuItem>
+              )}
+              {agent.isDefault ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="pointer-events-auto">
+                      <DropdownMenuItem disabled variant="destructive">
+                        <Trash2 className="size-4" />
+                        Delete agent
+                      </DropdownMenuItem>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    Default agent cannot be deleted
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="size-4" />
+                  Delete agent
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <AlertDialog open={rotateDialogOpen} onOpenChange={setRotateDialogOpen}>

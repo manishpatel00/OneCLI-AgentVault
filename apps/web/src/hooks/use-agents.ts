@@ -6,6 +6,7 @@ import { agents } from "@/lib/api";
 import { queryKeys } from "@/lib/api/keys";
 import {
   getAgents,
+  getAgent,
   deleteAgent,
   renameAgent,
   regenerateAgentToken,
@@ -15,6 +16,13 @@ import { invalidateGatewayCache } from "@/lib/api/cache";
 
 export const useAgents = (enabled = true) =>
   useQuery({ queryKey: queryKeys.agents.list(), queryFn: getAgents, enabled });
+
+export const useAgent = (agentId: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.agents.detail(agentId),
+    queryFn: () => getAgent(agentId),
+    enabled: enabled && !!agentId,
+  });
 
 export const useCreateAgent = () => {
   const qc = useQueryClient();

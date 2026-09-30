@@ -7,6 +7,7 @@ import {
   createAgent,
   agentExistsByIdentifier,
   getDefaultAgent,
+  getAgentById,
   setDefaultAgent,
   renameAgent,
   deleteAgent,
@@ -79,6 +80,14 @@ export const agentRoutes = () => {
     if (!agent) {
       return c.json({ error: "No default agent found" }, 404);
     }
+    return c.json(agent);
+  });
+
+  // GET /agents/:agentId
+  app.get("/:agentId", async (c) => {
+    const auth = c.get("auth");
+    const agentId = c.req.param("agentId");
+    const agent = await getAgentById(requireProjectId(auth), agentId);
     return c.json(agent);
   });
 

@@ -3,6 +3,7 @@
 import { resolveProjectContext } from "@/lib/actions/resolve-user";
 import {
   listAgents,
+  getAgentById,
   getDefaultAgent as getDefaultAgentService,
   setDefaultAgent as setDefaultAgentService,
   createAgent as createAgentService,
@@ -19,6 +20,11 @@ import {
 export const getAgents = async () => {
   const { projectId } = await resolveProjectContext();
   return listAgents(projectId);
+};
+
+export const getAgent = async (agentId: string) => {
+  const { projectId } = await resolveProjectContext();
+  return getAgentById(projectId, agentId);
 };
 
 export const getDefaultAgent = async () => {
