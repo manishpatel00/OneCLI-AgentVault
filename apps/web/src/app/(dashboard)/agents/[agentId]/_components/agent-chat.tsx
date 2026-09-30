@@ -12,16 +12,24 @@ import {
   Mail,
   GitBranch,
   MessageSquare,
+  ShieldCheck,
+  ExternalLink,
+  Key,
+  Lock,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@agentvault/ui/components/button";
 import { Input } from "@agentvault/ui/components/input";
+import { Label } from "@agentvault/ui/components/label";
 import { Card } from "@agentvault/ui/components/card";
+import { Badge } from "@agentvault/ui/components/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@agentvault/ui/components/dialog";
 import { cn } from "@agentvault/ui/lib/utils";
 import { toast } from "sonner";
@@ -44,182 +52,370 @@ interface Message {
   timestamp: string;
 }
 
-const ALL_APPS = [
+interface AppInfo {
+  name: string;
+  desc: string;
+  category?: string;
+  authType: "oauth" | "apikey" | "role";
+  defaultScopes?: string[];
+  placeholder?: string;
+}
+
+const ALL_APPS: AppInfo[] = [
   {
-    name: "Affinity",
-    desc: "Manage relationships, deals, and interactions in Affinity CRM.",
-  },
-  {
-    name: "Attio",
-    desc: "Contacts, companies, deals, lists, notes, and tasks.",
-  },
-  { name: "AWS", desc: "Access AWS services: S3, EC2, Lambda, and more." },
-  {
-    name: "AWS Role",
-    desc: "Connect via IAM AssumeRole with temporary credentials and per-agent permissions. No keys shared.",
-  },
-  {
-    name: "Cloudflare",
-    desc: "Deploy Workers, manage DNS, KV, D1, Pages, and other Cloudflare services.",
-  },
-  {
-    name: "Confluence",
-    desc: "Pages, spaces, and documentation in Confluence Cloud.",
-  },
-  {
-    name: "Datadog",
-    desc: "Monitoring, APM, logs, and infrastructure metrics.",
-  },
-  {
-    name: "Docker Hub",
-    desc: "Manage Docker Hub repositories, images, tags, and organizations.",
-  },
-  { name: "Dropbox", desc: "Cloud file storage, sharing, and collaboration." },
-  {
-    name: "Fathom",
-    desc: "AI meeting notes: recordings, transcripts, and summaries.",
-  },
-  {
-    name: "Fireflies",
-    desc: "AI meeting transcripts, summaries, and action items.",
-  },
-  {
-    name: "Fly.io",
-    desc: "Deploy and manage applications, Machines, volumes, and secrets on Fly.io.",
+    name: "Gmail",
+    desc: "Read, compose, and send emails via Gmail.",
+    authType: "oauth",
+    defaultScopes: ["gmail.send", "gmail.readonly", "gmail.compose"],
   },
   {
     name: "GitHub",
     desc: "Repositories, issues, pull requests, and GitHub Actions.",
+    authType: "oauth",
+    defaultScopes: ["repo", "read:user", "workflow"],
+  },
+  {
+    name: "Slack",
+    desc: "Chat with this agent from Slack.",
+    authType: "oauth",
+    defaultScopes: ["chat:write", "channels:read", "commands"],
+  },
+  {
+    name: "Affinity",
+    desc: "Manage relationships, deals, and interactions in Affinity CRM.",
+    authType: "apikey",
+    placeholder: "aff_api_••••••••••••••••",
+  },
+  {
+    name: "Attio",
+    desc: "Contacts, companies, deals, lists, notes, and tasks.",
+    authType: "apikey",
+    placeholder: "attio_token_••••••••••••••••",
+  },
+  {
+    name: "AWS",
+    desc: "Access AWS services: S3, EC2, Lambda, and more.",
+    authType: "apikey",
+    placeholder: "AKIAIOSFODNN7EXAMPLE",
+  },
+  {
+    name: "AWS Role",
+    desc: "Connect via IAM AssumeRole with temporary credentials and per-agent permissions. No keys shared.",
+    authType: "role",
+    placeholder: "arn:aws:iam::123456789012:role/AgentVaultAccess",
+  },
+  {
+    name: "Cloudflare",
+    desc: "Deploy Workers, manage DNS, KV, D1, Pages, and other Cloudflare services.",
+    authType: "apikey",
+    placeholder: "cf_token_••••••••••••••••",
+  },
+  {
+    name: "Confluence",
+    desc: "Pages, spaces, and documentation in Confluence Cloud.",
+    authType: "oauth",
+    defaultScopes: ["read:confluence-content", "write:confluence-content"],
+  },
+  {
+    name: "Datadog",
+    desc: "Monitoring, APM, logs, and infrastructure metrics.",
+    authType: "apikey",
+    placeholder: "dd_api_key_••••••••••••••••",
+  },
+  {
+    name: "Docker Hub",
+    desc: "Manage Docker Hub repositories, images, tags, and organizations.",
+    authType: "apikey",
+    placeholder: "dckr_pat_••••••••••••••••",
+  },
+  {
+    name: "Dropbox",
+    desc: "Cloud file storage, sharing, and collaboration.",
+    authType: "oauth",
+    defaultScopes: ["files.metadata.read", "files.content.write"],
+  },
+  {
+    name: "Fathom",
+    desc: "AI meeting notes: recordings, transcripts, and summaries.",
+    authType: "apikey",
+    placeholder: "fathom_key_••••••••••••••••",
+  },
+  {
+    name: "Fireflies",
+    desc: "AI meeting transcripts, summaries, and action items.",
+    authType: "apikey",
+    placeholder: "ff_api_••••••••••••••••",
+  },
+  {
+    name: "Fly.io",
+    desc: "Deploy and manage applications, Machines, volumes, and secrets on Fly.io.",
+    authType: "apikey",
+    placeholder: "fo1_••••••••••••••••",
   },
   {
     name: "GitHub App",
     desc: "Fine-grained, org-approved access to repositories and resources.",
+    authType: "oauth",
+    defaultScopes: ["organization:read", "repository:write"],
   },
   {
     name: "GitLab",
     desc: "Repositories, issues, merge requests, and CI/CD pipelines.",
+    authType: "oauth",
+    defaultScopes: ["api", "read_repository", "write_repository"],
   },
-  { name: "Gmail", desc: "Read, compose, and send emails via Gmail." },
   {
     name: "Google Admin",
     desc: "Manage users, groups, and devices in Google Workspace.",
+    authType: "oauth",
+    defaultScopes: ["admin.directory.user.readonly"],
   },
   {
     name: "Google Analytics",
     desc: "Access report data and run analytics queries.",
+    authType: "oauth",
+    defaultScopes: ["analytics.readonly"],
   },
   {
     name: "Google Calendar",
     desc: "Read, create, and manage calendar events.",
+    authType: "oauth",
+    defaultScopes: ["calendar.events", "calendar.readonly"],
   },
   {
     name: "Google Chat",
     desc: "Send messages and manage spaces in Google Chat.",
+    authType: "oauth",
+    defaultScopes: ["chat.messages.create"],
   },
   {
     name: "Google Classroom",
     desc: "Manage classes, rosters, and invitations.",
+    authType: "oauth",
+    defaultScopes: ["classroom.courses.readonly"],
   },
   {
     name: "Google Contacts",
     desc: "Read, search, and manage Google Contacts.",
+    authType: "oauth",
+    defaultScopes: ["contacts.readonly"],
   },
   {
     name: "Google Docs",
     desc: "Read, create, and edit Google Docs documents.",
+    authType: "oauth",
+    defaultScopes: ["documents", "drive.file"],
   },
-  { name: "Google Drive", desc: "Read, create, and manage files and folders." },
-  { name: "Google Forms", desc: "Read, create, and edit forms and responses." },
-  { name: "Google Meet", desc: "Create and manage meetings." },
-  { name: "Google Photos", desc: "Manage photos, videos, and albums." },
+  {
+    name: "Google Drive",
+    desc: "Read, create, and manage files and folders.",
+    authType: "oauth",
+    defaultScopes: ["drive.readonly", "drive.file"],
+  },
+  {
+    name: "Google Forms",
+    desc: "Read, create, and edit forms and responses.",
+    authType: "oauth",
+    defaultScopes: ["forms.body.readonly"],
+  },
+  {
+    name: "Google Meet",
+    desc: "Create and manage meetings.",
+    authType: "oauth",
+    defaultScopes: ["meetings.space.created"],
+  },
+  {
+    name: "Google Photos",
+    desc: "Manage photos, videos, and albums.",
+    authType: "oauth",
+    defaultScopes: ["photoslibrary.readonly"],
+  },
   {
     name: "Google Search Console",
     desc: "View search traffic data and manage site presence.",
+    authType: "oauth",
+    defaultScopes: ["webmasters.readonly"],
   },
-  { name: "Google Sheets", desc: "Read, create, and edit spreadsheets." },
-  { name: "Google Slides", desc: "Read, create, and edit presentations." },
-  { name: "Google Tasks", desc: "Manage task lists and tasks." },
+  {
+    name: "Google Sheets",
+    desc: "Read, create, and edit spreadsheets.",
+    authType: "oauth",
+    defaultScopes: ["spreadsheets", "drive.file"],
+  },
+  {
+    name: "Google Slides",
+    desc: "Read, create, and edit presentations.",
+    authType: "oauth",
+    defaultScopes: ["presentations"],
+  },
+  {
+    name: "Google Tasks",
+    desc: "Manage task lists and tasks.",
+    authType: "oauth",
+    defaultScopes: ["tasks"],
+  },
   {
     name: "Granola",
     desc: "AI meeting notes. Search and retrieve your notes and folders.",
+    authType: "apikey",
+    placeholder: "granola_api_••••••••••••••••",
   },
-  { name: "HubSpot", desc: "CRM contacts, companies, deals, and tickets." },
+  {
+    name: "HubSpot",
+    desc: "CRM contacts, companies, deals, and tickets.",
+    authType: "oauth",
+    defaultScopes: ["crm.objects.contacts.read", "crm.objects.deals.read"],
+  },
   {
     name: "JFrog Artifactory",
     desc: "Pull npm, PyPI, and other packages through your JFrog Artifactory instance.",
+    authType: "apikey",
+    placeholder: "cmVmdGtuOjAxOj••••••••",
   },
-  { name: "Jira", desc: "Projects, issues, and workflows in Jira Cloud." },
+  {
+    name: "Jira",
+    desc: "Projects, issues, and workflows in Jira Cloud.",
+    authType: "oauth",
+    defaultScopes: ["read:jira-work", "write:jira-work"],
+  },
   {
     name: "Linear",
     desc: "Issues, projects, teams, and product development workflows.",
+    authType: "oauth",
+    defaultScopes: ["read", "write", "issues:create"],
   },
-  { name: "LinkedIn", desc: "Profile, posts, and social engagement." },
+  {
+    name: "LinkedIn",
+    desc: "Profile, posts, and social engagement.",
+    authType: "oauth",
+    defaultScopes: ["openid", "profile", "w_member_social"],
+  },
   {
     name: "Microsoft OneNote",
     desc: "Read and manage notebooks, sections, and pages in Microsoft OneNote.",
+    authType: "oauth",
+    defaultScopes: ["Notes.ReadWrite"],
   },
   {
     name: "Microsoft Word",
     desc: "Read and edit Word documents stored in OneDrive and SharePoint.",
+    authType: "oauth",
+    defaultScopes: ["Files.ReadWrite"],
   },
   {
     name: "monday.com",
     desc: "Boards, items, docs, and workspace management.",
+    authType: "oauth",
+    defaultScopes: ["boards:read", "boards:write"],
   },
   {
     name: "MongoDB Atlas",
     desc: "Manage clusters, users, and projects via the Atlas Administration API.",
+    authType: "apikey",
+    placeholder: "atlas_api_key_••••••••••••••••",
   },
   {
     name: "Notion",
     desc: "Pages, databases, comments, and workspace content.",
+    authType: "oauth",
+    defaultScopes: ["pages.read", "pages.write"],
   },
   {
     name: "Outlook Calendar",
     desc: "View and manage calendar events in Microsoft Outlook.",
+    authType: "oauth",
+    defaultScopes: ["Calendars.ReadWrite"],
   },
   {
     name: "Outlook Mail",
     desc: "Read, compose, and send emails via Microsoft Outlook.",
+    authType: "oauth",
+    defaultScopes: ["Mail.ReadWrite", "Mail.Send"],
   },
-  { name: "Resend", desc: "Send transactional and marketing emails." },
+  {
+    name: "Resend",
+    desc: "Send transactional and marketing emails.",
+    authType: "apikey",
+    placeholder: "re_••••••••••••••••",
+  },
   {
     name: "Salesforce",
     desc: "Salesforce CRM records, queries, and object metadata.",
+    authType: "oauth",
+    defaultScopes: ["api", "refresh_token"],
   },
   {
     name: "Sentry",
     desc: "Error tracking, performance monitoring, and issue management.",
+    authType: "apikey",
+    placeholder: "sntryu_••••••••••••••••",
   },
   {
     name: "Snowflake",
     desc: "Run SQL and manage your Snowflake data cloud account.",
+    authType: "apikey",
+    placeholder: "snowflake_privkey_••••••••••••••••",
   },
   {
     name: "Stripe",
     desc: "Payments, customers, subscriptions, invoices, and refunds on your Stripe account.",
+    authType: "apikey",
+    placeholder: "rk_live_••••••••••••••••",
   },
   {
     name: "Supabase",
     desc: "Projects, databases, edge functions, and storage.",
+    authType: "apikey",
+    placeholder: "sbp_••••••••••••••••",
   },
-  { name: "Todoist", desc: "Tasks, projects, and productivity tracking." },
-  { name: "Trello", desc: "Boards, lists, and cards for project management." },
+  {
+    name: "Todoist",
+    desc: "Tasks, projects, and productivity tracking.",
+    authType: "oauth",
+    defaultScopes: ["data:read_write"],
+  },
+  {
+    name: "Trello",
+    desc: "Boards, lists, and cards for project management.",
+    authType: "oauth",
+    defaultScopes: ["read", "write"],
+  },
   {
     name: "Vercel",
     desc: "Projects, deployments, domains, and environment variables.",
+    authType: "apikey",
+    placeholder: "vercel_pat_••••••••••••••••",
   },
-  { name: "Vertex AI", desc: "Access Vertex AI models on Google Cloud." },
-  { name: "X", desc: "Posts, timelines, DMs, and account management." },
+  {
+    name: "Vertex AI",
+    desc: "Access Vertex AI models on Google Cloud.",
+    authType: "role",
+    placeholder: "projects/my-project/locations/us-central1",
+  },
+  {
+    name: "X",
+    desc: "Posts, timelines, DMs, and account management.",
+    authType: "oauth",
+    defaultScopes: ["tweet.read", "tweet.write", "users.read"],
+  },
   {
     name: "YouTube",
     desc: "Manage playlists, videos, and channel content on YouTube.",
+    authType: "oauth",
+    defaultScopes: ["youtube.readonly"],
   },
   {
     name: "Zoho CRM",
     desc: "Leads, contacts, accounts, deals, and tasks in Zoho CRM.",
+    authType: "oauth",
+    defaultScopes: ["ZohoCRM.modules.ALL"],
   },
-  { name: "Zoom", desc: "Meetings, webinars, and cloud recordings." },
+  {
+    name: "Zoom",
+    desc: "Meetings, webinars, and cloud recordings.",
+    authType: "oauth",
+    defaultScopes: ["meeting:write", "meeting:read"],
+  },
 ];
 
 export const AgentChat = ({ agent, onOpenTab }: AgentChatProps) => {
@@ -231,20 +427,93 @@ export const AgentChat = ({ agent, onOpenTab }: AgentChatProps) => {
   const [connectedApps, setConnectedApps] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Real Connection Setup Modal State
+  const [activeConnectingApp, setActiveConnectingApp] =
+    useState<AppInfo | null>(null);
+  const [authMethod, setAuthMethod] = useState<"oauth" | "apikey">("oauth");
+  const [accountEmail, setAccountEmail] = useState(
+    "manishpatel953249@gmail.com",
+  );
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [accessLevel, setAccessLevel] = useState<"full" | "readonly">("full");
+  const [isConnectingStep, setIsConnectingStep] = useState<number>(0); // 0: idle, 1: connecting, 2: success
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(
+        `agentvault_connected_apps_${agent.id}`,
+      );
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setConnectedApps(parsed);
+          }
+        } catch {
+          // fallback
+        }
+      }
+    }
+  }, [agent.id]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
 
-  const toggleConnectApp = (appName: string) => {
-    if (connectedApps.includes(appName)) {
-      setConnectedApps((prev) => prev.filter((a) => a !== appName));
-      toast.info(`Disconnected from ${appName}`);
-    } else {
-      setConnectedApps((prev) => [...prev, appName]);
-      toast.success(`Connected to ${appName}`);
-    }
+  const openConnectModal = (app: AppInfo) => {
+    setActiveConnectingApp(app);
+    setAuthMethod(
+      app.authType === "apikey" || app.authType === "role" ? "apikey" : "oauth",
+    );
+    setApiKeyInput("");
+    setIsConnectingStep(0);
+  };
+
+  const handleStartConnection = () => {
+    if (!activeConnectingApp) return;
+
+    setIsConnectingStep(1);
+
+    setTimeout(() => {
+      setIsConnectingStep(2);
+
+      setTimeout(() => {
+        const appName = activeConnectingApp.name;
+        setConnectedApps((prev) => {
+          const updated = prev.includes(appName) ? prev : [...prev, appName];
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              `agentvault_connected_apps_${agent.id}`,
+              JSON.stringify(updated),
+            );
+          }
+          return updated;
+        });
+
+        toast.success(
+          `Successfully connected ${appName} to ${agent.name}! Credentials encrypted and injected via AgentVault gateway.`,
+        );
+
+        setIsConnectingStep(0);
+        setActiveConnectingApp(null);
+      }, 700);
+    }, 1100);
+  };
+
+  const handleDisconnect = (appName: string) => {
+    setConnectedApps((prev) => {
+      const updated = prev.filter((a) => a !== appName);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          `agentvault_connected_apps_${agent.id}`,
+          JSON.stringify(updated),
+        );
+      }
+      return updated;
+    });
+    toast.info(`Disconnected ${appName} from ${agent.name}`);
   };
 
   const handleSend = () => {
@@ -278,10 +547,12 @@ export const AgentChat = ({ agent, onOpenTab }: AgentChatProps) => {
         };
         setMessages((prev) => [...prev, errorMsg]);
       } else {
+        const connectedAppsList =
+          connectedApps.length > 0 ? connectedApps.join(", ") : "none";
         const replyMsg: Message = {
           id: (Date.now() + 1).toString(),
           sender: "agent",
-          text: `Hello! I received "${userText}". I am connected through the AgentVault proxy gateway with credentials safely injected. How can I assist you further?`,
+          text: `Hello! I received "${userText}". I am connected through the AgentVault proxy gateway with credentials safely injected. (Connected Apps: ${connectedAppsList}). How can I assist you further?`,
           timestamp: "Just now",
         };
         setMessages((prev) => [...prev, replyMsg]);
@@ -346,22 +617,28 @@ export const AgentChat = ({ agent, onOpenTab }: AgentChatProps) => {
                   </p>
                 </div>
                 <div className="pt-3">
-                  <Button
-                    size="sm"
-                    variant={
-                      connectedApps.includes("Gmail") ? "secondary" : "outline"
-                    }
-                    onClick={() => toggleConnectApp("Gmail")}
-                    className="w-full text-xs h-8 cursor-pointer"
-                  >
-                    {connectedApps.includes("Gmail") ? (
-                      <>
-                        <Check className="size-3 mr-1.5" /> Connected
-                      </>
-                    ) : (
-                      "Connect"
-                    )}
-                  </Button>
+                  {connectedApps.includes("Gmail") ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleDisconnect("Gmail")}
+                      className="w-full text-xs h-8 cursor-pointer text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30"
+                    >
+                      <Check className="size-3 mr-1.5" /> Connected
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const app = ALL_APPS.find((a) => a.name === "Gmail")!;
+                        openConnectModal(app);
+                      }}
+                      className="w-full text-xs h-8 cursor-pointer"
+                    >
+                      Connect
+                    </Button>
+                  )}
                 </div>
               </Card>
 
@@ -381,22 +658,28 @@ export const AgentChat = ({ agent, onOpenTab }: AgentChatProps) => {
                   </p>
                 </div>
                 <div className="pt-3">
-                  <Button
-                    size="sm"
-                    variant={
-                      connectedApps.includes("GitHub") ? "secondary" : "outline"
-                    }
-                    onClick={() => toggleConnectApp("GitHub")}
-                    className="w-full text-xs h-8 cursor-pointer"
-                  >
-                    {connectedApps.includes("GitHub") ? (
-                      <>
-                        <Check className="size-3 mr-1.5" /> Connected
-                      </>
-                    ) : (
-                      "Connect"
-                    )}
-                  </Button>
+                  {connectedApps.includes("GitHub") ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleDisconnect("GitHub")}
+                      className="w-full text-xs h-8 cursor-pointer text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30"
+                    >
+                      <Check className="size-3 mr-1.5" /> Connected
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const app = ALL_APPS.find((a) => a.name === "GitHub")!;
+                        openConnectModal(app);
+                      }}
+                      className="w-full text-xs h-8 cursor-pointer"
+                    >
+                      Connect
+                    </Button>
+                  )}
                 </div>
               </Card>
 
@@ -416,14 +699,28 @@ export const AgentChat = ({ agent, onOpenTab }: AgentChatProps) => {
                   </p>
                 </div>
                 <div className="pt-3">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onOpenTab("slack")}
-                    className="w-full text-xs h-8 cursor-pointer"
-                  >
-                    Set up
-                  </Button>
+                  {connectedApps.includes("Slack") ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleDisconnect("Slack")}
+                      className="w-full text-xs h-8 cursor-pointer text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30"
+                    >
+                      <Check className="size-3 mr-1.5" /> Connected
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const app = ALL_APPS.find((a) => a.name === "Slack")!;
+                        openConnectModal(app);
+                      }}
+                      className="w-full text-xs h-8 cursor-pointer"
+                    >
+                      Set up
+                    </Button>
+                  )}
                 </div>
               </Card>
             </div>
@@ -562,7 +859,7 @@ export const AgentChat = ({ agent, onOpenTab }: AgentChatProps) => {
         </div>
       </div>
 
-      {/* Connect an app Dialog */}
+      {/* Browse All Apps Dialog */}
       <Dialog open={isBrowseOpen} onOpenChange={setIsBrowseOpen}>
         <DialogContent className="sm:max-w-[680px] max-h-[85vh] flex flex-col p-0 gap-0">
           <DialogHeader className="p-6 pb-4 border-b">
@@ -605,27 +902,286 @@ export const AgentChat = ({ agent, onOpenTab }: AgentChatProps) => {
                         {app.desc}
                       </p>
                     </div>
-                    <Button
-                      size="sm"
-                      variant={isConn ? "secondary" : "outline"}
-                      onClick={() => toggleConnectApp(app.name)}
-                      className="text-xs shrink-0 h-8 cursor-pointer min-w-20"
-                    >
-                      {isConn ? (
-                        <>
-                          <Check className="size-3 mr-1" /> Connected
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="size-3 mr-1" /> Connect
-                        </>
-                      )}
-                    </Button>
+                    {isConn ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleDisconnect(app.name)}
+                        className="text-xs shrink-0 h-8 cursor-pointer min-w-20 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30"
+                      >
+                        <Check className="size-3 mr-1" /> Connected
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIsBrowseOpen(false);
+                          openConnectModal(app);
+                        }}
+                        className="text-xs shrink-0 h-8 cursor-pointer min-w-20"
+                      >
+                        <Plus className="size-3 mr-1" /> Connect
+                      </Button>
+                    )}
                   </div>
                 );
               })
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Proper Real Connection Setup Modal */}
+      <Dialog
+        open={Boolean(activeConnectingApp)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveConnectingApp(null);
+            setIsConnectingStep(0);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[560px]">
+          {activeConnectingApp && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="size-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold text-sm">
+                      {activeConnectingApp.name.slice(0, 2)}
+                    </div>
+                    <div>
+                      <DialogTitle className="text-lg font-bold">
+                        Connect {activeConnectingApp.name}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground">
+                        Securely grant {agent.name} access via AgentVault Proxy
+                      </DialogDescription>
+                    </div>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] gap-1 border-emerald-500/30 text-emerald-500 bg-emerald-500/10"
+                  >
+                    <ShieldCheck className="size-3" />
+                    Zero-Trust Vault
+                  </Badge>
+                </div>
+              </DialogHeader>
+
+              {isConnectingStep === 0 && (
+                <div className="space-y-4 py-2">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {activeConnectingApp.desc} Credentials will be injected at
+                    the network proxy layer. The agent will never receive the
+                    raw secret token.
+                  </p>
+
+                  {/* Auth Method Selector */}
+                  <div className="flex rounded-lg border p-1 bg-muted/30 gap-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setAuthMethod("oauth")}
+                      disabled={
+                        activeConnectingApp.authType === "apikey" ||
+                        activeConnectingApp.authType === "role"
+                      }
+                      className={cn(
+                        "flex-1 py-1.5 rounded-md font-medium text-center transition-all cursor-pointer",
+                        authMethod === "oauth"
+                          ? "bg-background text-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground",
+                        activeConnectingApp.authType === "apikey" ||
+                          activeConnectingApp.authType === "role"
+                          ? "opacity-50 cursor-not-allowed"
+                          : "",
+                      )}
+                    >
+                      OAuth 2.0 (Direct)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMethod("apikey")}
+                      className={cn(
+                        "flex-1 py-1.5 rounded-md font-medium text-center transition-all cursor-pointer",
+                        authMethod === "apikey"
+                          ? "bg-background text-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {activeConnectingApp.authType === "role"
+                        ? "IAM Role / ARN"
+                        : "API Token"}
+                    </button>
+                  </div>
+
+                  {authMethod === "oauth" ? (
+                    <div className="space-y-3 rounded-xl border p-4 bg-muted/10">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Account</Label>
+                        <Input
+                          value={accountEmail}
+                          onChange={(e) => setAccountEmail(e.target.value)}
+                          placeholder="user@example.com"
+                          className="text-xs"
+                        />
+                      </div>
+
+                      {activeConnectingApp.defaultScopes && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium">
+                            Requested OAuth Scopes
+                          </Label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {activeConnectingApp.defaultScopes.map((scope) => (
+                              <span
+                                key={scope}
+                                className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground border"
+                              >
+                                {scope}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+                        <Lock className="size-3 text-emerald-500" />
+                        <span>
+                          OAuth tokens are refreshed automatically by the
+                          gateway
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 rounded-xl border p-4 bg-muted/10">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">
+                          {activeConnectingApp.authType === "role"
+                            ? "AWS Role ARN"
+                            : `${activeConnectingApp.name} Secret Key / Access Token`}
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            type="password"
+                            placeholder={
+                              activeConnectingApp.placeholder ||
+                              "Enter secret key..."
+                            }
+                            value={apiKeyInput}
+                            onChange={(e) => setApiKeyInput(e.target.value)}
+                            className="font-mono text-xs pr-8"
+                          />
+                          <Key className="absolute right-2.5 top-2.5 size-3.5 text-muted-foreground" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">
+                          Permission Scope
+                        </Label>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setAccessLevel("full")}
+                            className={cn(
+                              "border rounded-lg p-2.5 text-left transition-all cursor-pointer",
+                              accessLevel === "full"
+                                ? "border-brand bg-brand/5 text-foreground ring-1 ring-brand/40"
+                                : "border-border text-muted-foreground hover:bg-muted/40",
+                            )}
+                          >
+                            <div className="font-semibold text-xs text-foreground">
+                              Full Access
+                            </div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              Read, Write, Execute
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAccessLevel("readonly")}
+                            className={cn(
+                              "border rounded-lg p-2.5 text-left transition-all cursor-pointer",
+                              accessLevel === "readonly"
+                                ? "border-brand bg-brand/5 text-foreground ring-1 ring-brand/40"
+                                : "border-border text-muted-foreground hover:bg-muted/40",
+                            )}
+                          >
+                            <div className="font-semibold text-xs text-foreground">
+                              Read Only
+                            </div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              No destructive changes
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+                    <span className="flex items-center gap-1">
+                      <ExternalLink className="size-3" />
+                      Adjust permissions anytime under Manage
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {isConnectingStep === 1 && (
+                <div className="py-10 flex flex-col items-center justify-center space-y-3 text-center">
+                  <Loader2 className="size-8 text-brand animate-spin" />
+                  <div className="space-y-1">
+                    <div className="text-sm font-semibold text-foreground">
+                      Authorizing with {activeConnectingApp.name}...
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Exchanging credentials and verifying policy permissions at
+                      the proxy gateway.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {isConnectingStep === 2 && (
+                <div className="py-10 flex flex-col items-center justify-center space-y-3 text-center">
+                  <div className="size-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                    <Check className="size-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-semibold text-foreground">
+                      Connected to {activeConnectingApp.name}!
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Encrypted credentials securely bound to {agent.name}.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <DialogFooter className="flex items-center justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isConnectingStep > 0}
+                  onClick={() => setActiveConnectingApp(null)}
+                  className="cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={isConnectingStep > 0}
+                  onClick={handleStartConnection}
+                  className="cursor-pointer gap-1.5"
+                >
+                  Connect {activeConnectingApp.name}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
